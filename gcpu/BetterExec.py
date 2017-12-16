@@ -1,5 +1,4 @@
-defaultexec=exec
-defaulteval=eval
+
 import sys
 import traceback
 
@@ -7,9 +6,9 @@ import traceback
 class InterpreterError(Exception): pass
 
 
-def exec(cmd, globals=None, locals=None, description='source string'):
+def betterexec(cmd, globals=None, locals=None, description='source string'):
     try:
-        defaultexec(cmd, globals, locals)
+        exec(cmd, globals, locals)
     except SyntaxError as err:
         error_class = err.__class__.__name__
         detail = err.args[0]

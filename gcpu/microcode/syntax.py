@@ -1,13 +1,36 @@
 
 #the mnemonics used when programming
 # i know its one syntax, many syntax but to differ form class Syntax
-Syntaxes = []
-SyntaxesByMnemonic={}
-
-
-
 
 class Syntax(object):
+
+    syntaxes = []
+    syntaxesByMnemonic={}
+
+    def Create(mnemonic,args,instruction,priority=0):
+        result=Syntax(mnemonic,instruction,args,priority)
+        Syntax.syntaxes.append(result)
+
+        if mnemonic not in Syntax.syntaxesByMnemonic:
+            Syntax.syntaxesByMnemonic[mnemonic]=[]
+        Syntax.syntaxesByMnemonic[mnemonic].append(result)
+
+        return result
+    
+
+
+    def Query(mnemonic,args):
+        if mnemonic not in Syntax.syntaxesByMnemonic:
+            return False
+        for s in Syntax.syntaxesByMnemonic[mnemonic]:
+            if s.matchesargs(args):
+                return s
+        return False
+
+
+
+
+
     def __init__(self,mnemonic,instruction, args=[],priority=0):
         self.mnemonic=mnemonic
         self.args=args
@@ -20,7 +43,6 @@ class Syntax(object):
         return self.instruction.compile(argstocompilewith)
 
     def matchesargs(self,args):
-
         def argvalidator(providedarg,syntaxarg):
             if type(providedarg) is syntaxarg['type']:
                 if 'fixvalue' in syntaxarg and providedarg is not syntaxarg['fixvalue']:
@@ -47,25 +69,7 @@ class Syntax(object):
         return result
 
 
+
     
-def Query(mnemonic,args):
-    
-    if mnemonic not in SyntaxesByMnemonic:
-        return False
-    for s in SyntaxesByMnemonic[mnemonic]:
-        if s.matchesargs(args):
-            return s
-    return False
 
 
-
-def CreateSyntax(mnemonic,args,instruction,priority=0):
-    result=Syntax(mnemonic,instruction,args,priority)
-    Syntaxes.append(result)
-
-    if mnemonic not in SyntaxesByMnemonic:
-        SyntaxesByMnemonic[mnemonic]=[]
-    SyntaxesByMnemonic[mnemonic].append(result)
-
-    return result
-    

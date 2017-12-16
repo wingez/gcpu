@@ -1,9 +1,17 @@
 
-import BitHelper
-import uuid
-import BetterExec
 
-from Syntax import Syntax, CreateSyntax
+#from .. import bithelper
+import uuid
+from ..betterexec import betterexec
+
+from .signal import Signal
+from .register import Register
+from .constant import Constant
+from .syntax import Syntax
+#import BetterExec
+
+#from Syntax import Syntax, CreateSyntax
+#from .Syntax import Syntax, CreateSyntax
 
 #the instructionsset
 instructions = []
@@ -16,45 +24,8 @@ registers = []
 #content represented by 32bit uint
 instructiondata = [0] * (2 ** 15)
 
-Constant = uuid.UUID
-
-def CreateConstant():
-    return uuid.uuid4()
 
 
-
-def Signal(index,name=''):
-    #TODO: add tracking for documentation
-    return [index]
-
-
-def SignalMultiplexer(signals):
-    bits = len(signals)
-
-    def result(index):
-        if index >=2**bits or index<0:
-            raise ValueError('Index not in bounds')
-        tmp=[]
-        for i in range(bits):
-            if (1<<i) & index:
-                tmp.append(signals[i])
-        return tmp
-
-    return result
-
-class Register(object):
-    def __init__(self,index,name,read,write,description=''):
-        self.index = index
-        self.name = name
-
-        self.read=read
-        self.write=write
-    def __str__(self):
-        return self.name or 'register'
-    def compileread(self):
-        return BitHelper.touppernibble(self.index)
-    def compilewrite(self):
-        return BitHelper.tolowernibble(self.index)
 
 
 def CreateRegister(index,name,read,write,description=''):
@@ -104,7 +75,7 @@ def CreateInstruction(mnemonic='', group='uncategorized', desc='',id=None,
                 if 'fixvalue' in a.keys():
                     priority=1
                     break
-        CreateSyntax(mnemonic,args,instr,priority)
+        Syntax.Create(mnemonic,args,instr,priority)
         
     instructions.append(instr)
 
@@ -124,7 +95,7 @@ def loadinstructions(filename):
     
     #Parse file
     print('parsing file '+filename)
-    BetterExec.exec(open(filename).read(),description=filename)
+    betterexec(open(filename).read(),description=filename)
     
     
     #instructions and registers assume has valid data
