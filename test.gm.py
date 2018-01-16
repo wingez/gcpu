@@ -1,8 +1,5 @@
 
 from gcpu.microcode import *
-print(dir())
-print('herpderp')
-
 
 
 

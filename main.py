@@ -1,59 +1,31 @@
-
 import sys
 from gcpu import bithelper
-from gcpu.microcode import core 
+from gcpu.microcode import core
+from gcpu.microcode import syntax
+
+from gcpu.compiler import newcompiler
+
 
 def compilefile(args):
-    pass
+    microcode = args[0]
+    file = args[1]
+    core.loadinstructions(microcode)
+    syntax.printall()
+    newcompiler.compile(file)
 
 
 def microcode(args):
     name = args[0]
     core.loadinstructions(name)
-   
+    syntax.printall()
 
 
-
-
-
-
-
-
-
-
-
-if __name__=='__main__':
+if __name__ == '__main__':
 
     action = sys.argv[1]
     args = sys.argv[2:]
 
-    if action=='compile':
+    if action == 'compile':
         compilefile(args)
-    elif action=='microcode':
+    elif action == 'microcode':
         microcode(args)
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
