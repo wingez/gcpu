@@ -1,4 +1,4 @@
-from gcpu.compiler import codecontext, compiler
+from gcpu.compiler import codecontext, compiler, throwhelper
 from gcpu.compiler.defstatement import defstatement, isdefstatement
 from gcpu.compiler.memory import MemorySegment
 from gcpu.compiler.dependecyconstant import DependencyConstant
@@ -28,3 +28,6 @@ def compile(comp):
                     comp.addobject(id,comp.memsegments[id].address)
             else:
                 comp.addobject(id, result)
+
+        else:
+            throwhelper.throw('unable to parse. Line: '+line)
