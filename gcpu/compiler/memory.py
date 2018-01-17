@@ -24,18 +24,20 @@ class MemoryAllocator:
         self.maxsize = maxsize
         self.size = 0
 
-    def allocate(self, memsegment):
+    def allocatealldependents(self, rootobject: MemorySegment, allocating=set()):
 
-        if memsegment not in self.allocated:
-            memsegment.isallocated = True
+        if rootobject not in self.allocated:
+            rootobject.isallocated = True
 
-            self.allocated.add(memsegment)
+            self.allocated.add(rootobject)
 
-    def allocatealldependents(self, rootobject: MemorySegment):
+        if rootobject in allocating:
+            return
 
-        self.allocate(rootobject)
+        allocating.add(rootobject)
         for dependency in rootobject.dependencies:
             self.allocatealldependents(dependency)
+        allocating.remove(rootobject)
 
     def asignaddresses(self, zerosegment=None):
 
