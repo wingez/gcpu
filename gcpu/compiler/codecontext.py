@@ -10,32 +10,40 @@ indexsymbol = '.'
 
 class CodeFunction(MemorySegment):
 
-    def __init__(self, name: str, compiler):# newcompiler.FileCompiler):
+    def __init__(self, name: str, comp):  # newcompiler.FileCompiler):
         self.name = name
-        self.compiler = compiler
+        self.compiler = comp
         self.indices = {}
         super().__init__()
 
+    def getasignmessage(self):
+        return 'function ' + self.name
 
-def compile(compiler, startline: str):
-    locals = compiler.locals.copy()
+
+def compile(comp, startline: str):
+    locals = comp.locals.copy()
     function = None
 
     name = startline.lstrip(startsymbol)
     if compiler.phase == 1:
-        function = CodeFunction(name, compiler)
-        function.indices = readindices(compiler)
-        compiler.functions[name]=function
+        function = CodeFunction(name, comp)
+        function.indices = readindices(comp)
+        comp.functions[name] = function
     elif compiler.phase == 2:
-        function = compiler.functions[name]
+        function = comp.functions[name]
         if not function.isallocated:
             return
+
+    if compiler.phase == 1:
+        comp.addobject(name, DependencyConstant(function))
+    elif compiler.phase == 2:
+        comp.addobject(name, function.address)
 
     locals.update(function.indices)
 
     offset = 0
     while True:
-        line = compiler.nextline()
+        line = comp.nextline()
         if line == endsymbol:
             break
         elif isindex(line):
@@ -55,18 +63,19 @@ def compile(compiler, startline: str):
             elif compiler.phase == 2:
                 function.content.extend(s.compile(args))
 
-def readindices(compiler):
+
+def readindices(comp):
     indices = {}
-    begstate = compiler.getstate()
+    begstate = comp.getstate()
     while True:
-        line = compiler.nextline()
+        line = comp.nextline()
 
         if line == endsymbol:
             break
         if isindex(line):
             i = index(line)
             indices[i] = 0
-    compiler.setstate(begstate)
+    comp.setstate(begstate)
     return indices
 
 
@@ -78,12 +87,12 @@ def parseprogramstatement(statement: str):
 
 
 def evaluateargs(args, vars, function: CodeFunction):
-    result = [eval(x, locals=vars) for x in args]
+    result = [eval(x, None, vars) for x in args]
     for i, arg in enumerate(result):
         if type(arg) is DependencyConstant:
             if compiler.phase == 1:
                 result[i] = 0
-                function.dependencies.append(arg.dependencies)
+                function.dependencies.extend(arg.dependencies)
             elif compiler.phase == 2:
                 throwhelper.throw('type: dependencyconstant invalid in phase 2')
     return result

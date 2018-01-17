@@ -75,7 +75,13 @@ CreateInstruction('test',id=1,desc='the official instruction made for testing ne
 CreateInstruction('halt',id=255,
                   stages=[halt])
 
-
+CreateInstruction('loada',id=2,desc='',
+                  stages=[
+                      fetchstandard
+                  ],
+                  args=[{'type':int,'name':'value'}],
+                  compilefunc=lambda value:[value]
+                  )
 
 
 

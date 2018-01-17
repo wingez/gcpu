@@ -1,9 +1,7 @@
-
-
 from gcpu.compiler import throwhelper
 from gcpu.compiler import maincontext
 from gcpu.compiler.dependecyconstant import DependencyConstant
-from gcpu.compiler.memory import MemoryAllocator
+from gcpu.compiler.memory import MemoryAllocator, MemorySegment
 
 dependencyimportsymbols = '#import '
 commentsymbols = '//'
@@ -18,8 +16,6 @@ Phases:
 """
 phase = 0
 
-
-
 filesIncluded = {}
 filesCurrentlyIncluding = []
 compileOrder = []
@@ -31,16 +27,20 @@ def compile(filename: str):
     filesCurrentlyIncluding.clear()
     compileOrder.clear()
 
+    throwhelper.log('starting compilation of file '+filename)
     phase = 0
     # load the file and recursively, all its dependencies
     # filesIncluded and compileOrder is now populated
     basefile = initializefile(filename)
 
     # perform compilation phase 1
+    throwhelper.log('starting compilation phase 1')
     phase = 1
     for file in compileOrder:
         file.compilephase1()
+    throwhelper.log('ending compilation phase 1')
 
+    throwhelper.log('starting memory asignments')
     # calculate what memorysegments to include and asign address
     if entryfunctionname not in basefile.functions:
         raise throwhelper.CompileError(
@@ -50,17 +50,20 @@ def compile(filename: str):
     entryfunction = basefile.functions[entryfunctionname]
     allocator = MemoryAllocator()
     allocator.allocatealldependents(entryfunction)
-    allocator.asignaddresses()
+    allocator.asignaddresses(entryfunction)
+    throwhelper.log('ending memory asignments')
 
+    throwhelper.log('starting compilation phase 2')
     # perform phase2 compilation
-    phase=2
+    phase = 2
     for file in compileOrder:
         file.compilephase2()
+    throwhelper.log('ending compilation phase 2')
 
-    file=allocator.generatefilecontent()
-    for index,value in enumerate(file):
-        print('{}: {}'.format(index,value))
-
+    throwhelper.log('generating output file')
+    file = allocator.generatefilecontent()
+    for index, value in enumerate(file):
+        print('{}: {}'.format(index, value))
 
 
 def initializefile(filename):
@@ -97,7 +100,21 @@ def trimcomments(line):
 
 
 def getglobals():
-    return {}
+    return {'msb': msb}
+
+
+
+def msb(value):
+    result = MemorySegment()
+    result.size = 2
+
+    if phase == 1:
+        if issubclass(type(value), DependencyConstant):
+            result.dependencies.append(value)
+    if phase == 2:
+        result.content = [value]
+
+    return result
 
 
 class FileCompiler:
@@ -146,18 +163,6 @@ class FileCompiler:
                     result[identifier] = DependencyConstant(func)
                 elif phase == 2:
                     result[identifier] = func.address
-                else:
-                    raise NotImplementedError()
-
-        for name, memsegment in self.memsegments.items():
-            if phase != 2 or memsegment.isallocated:
-                identifier = self.name + '_' + name
-                if phase == 1:
-                    result[identifier] = DependencyConstant(memsegment)
-                elif phase == 2:
-                    result[identifier] = memsegment.address
-                else:
-                    raise NotImplementedError()
 
         for name, value in self.defines.items():
             result[self.name + '_' + name] = value
@@ -172,8 +177,10 @@ class FileCompiler:
         if phase == 1:
             pass
         elif phase == 2:
-            result.update(self.functions)
-            result.update(self.memsegments)
+            for name, func in self.functions.items():
+                result[name] = func.address
+            for name, mem in self.memsegments.items():
+                result[name] = mem.address
         return result
 
     def compilephase1(self):
@@ -190,6 +197,10 @@ class FileCompiler:
 
         # recursevly compile the file
         maincontext.compile(self)
+
+    def addobject(self, name, obj):
+        self.defines[name] = obj
+        self.locals[name] = obj
 
     def nextline(self) -> str:
 

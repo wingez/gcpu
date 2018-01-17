@@ -4,14 +4,16 @@ import gcpu.compiler.throwhelper as throwhelper
 
 class MemorySegment:
 
-    def __init__(self):
+    def __init__(self,id=''):
         self.isallocated = False
         self.address = 0
         self.size = 0
         self.content = []
         self.dependencies = []
+        self.id=id
 
-    pass
+    def getasignmessage(self)->str:
+        return self.id
 
 
 class MemoryAllocator:
@@ -22,11 +24,12 @@ class MemoryAllocator:
         self.maxsize = maxsize
         self.size = 0
 
-    def allocate(self, *memsegments):
-        for m in memsegments:
-            if m not in self.allocated:
-                m.isallocated = True
-                self.allocated.add(m)
+    def allocate(self, memsegment):
+
+        if memsegment not in self.allocated:
+            memsegment.isallocated = True
+
+            self.allocated.add(memsegment)
 
     def allocatealldependents(self, rootobject: MemorySegment):
 
@@ -47,6 +50,11 @@ class MemoryAllocator:
         if self.currentaddress + segment.size >= self.maxsize:
             throwhelper.throw('not enough memoey avaliable')
         else:
+            name = segment.getasignmessage()
+            if not name:
+                name='unknown'
+            throwhelper.log('asignning {}, size= {} at address {}'.format(name,segment.size, self.currentaddress,))
+
             segment.address = self.currentaddress
             self.currentaddress += segment.size
 

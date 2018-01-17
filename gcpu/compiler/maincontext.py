@@ -1,21 +1,30 @@
-
+from gcpu.compiler import codecontext, compiler
 from gcpu.compiler.defstatement import defstatement, isdefstatement
+from gcpu.compiler.memory import MemorySegment
+from gcpu.compiler.dependecyconstant import DependencyConstant
 
 
-import gcpu.compiler.codecontext as codecontext
-
-
-def compile(compiler):
+def compile(comp):
     while True:
 
         try:
-            line = compiler.nextline()
+            line = comp.nextline()
 
         except EOFError:
             return
 
         if codecontext.check(line):
-            codecontext.compile(compiler, line)
+            codecontext.compile(comp, line)
         elif isdefstatement(line):
-            id, result = defstatement(line, compiler.locals)
-            compiler.locals[id] = result
+            id, result = defstatement(line, comp.locals)
+
+            if type(result) is MemorySegment:
+                if compiler.phase == 1:
+                    result.id=id
+                    comp.memsegments[id] = result
+                    comp.addobject(id, DependencyConstant(result))
+                elif compiler.phase == 2:
+                    comp.memsegments[id].content=result.content
+                    comp.addobject(id,comp.memsegments[id].address)
+            else:
+                comp.addobject(id, result)

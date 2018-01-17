@@ -8,7 +8,8 @@ class DependencyConstant:
     def __init__(self, dependencies):
         if issubclass(type(dependencies), MemorySegment):
             self.dependencies = [dependencies]
-        self.dependencies = dependencies
+        else:
+            self.dependencies = dependencies
 
     def __add__(self, other):
         if compiler.phase != 1:
