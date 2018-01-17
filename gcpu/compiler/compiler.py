@@ -6,8 +6,8 @@ from gcpu.compiler.memory import MemoryAllocator, MemorySegment
 dependencyimportsymbols = '#import '
 commentsymbols = '//'
 entryfunctionname = 'main'
-codefileextension='.g'
-outputfileextension='.gb'
+codefileextension = '.g'
+outputfileextension = '.gb'
 
 """
 Phases:
@@ -29,18 +29,22 @@ def compile(filename: str):
     filesCurrentlyIncluding.clear()
     compileOrder.clear()
 
-    throwhelper.log('starting compilation of file '+filename)
+    throwhelper.log('starting compilation of file ' + filename+'\n')
+
+    throwhelper.log('starting initialization and imports')
     phase = 0
     # load the file and recursively, all its dependencies
     # filesIncluded and compileOrder is now populated
     basefile = initializefile(filename)
+    throwhelper.log('ending initialization and imports\n')
+
 
     # perform compilation phase 1
     throwhelper.log('starting compilation phase 1')
     phase = 1
     for file in compileOrder:
         file.compilephase1()
-    throwhelper.log('ending compilation phase 1')
+    throwhelper.log('ending compilation phase 1\n')
 
     throwhelper.log('starting memory asignments')
     # calculate what memorysegments to include and asign address
@@ -53,19 +57,19 @@ def compile(filename: str):
     allocator = MemoryAllocator()
     allocator.allocatealldependents(entryfunction)
     allocator.asignaddresses(entryfunction)
-    throwhelper.log('ending memory asignments')
+    throwhelper.log('ending memory asignments\n')
 
     throwhelper.log('starting compilation phase 2')
     # perform phase2 compilation
     phase = 2
     for file in compileOrder:
         file.compilephase2()
-    throwhelper.log('ending compilation phase 2')
+    throwhelper.log('ending compilation phase 2\n')
 
     throwhelper.log('generating output file')
     filecontent = allocator.generatefilecontent()
     throwhelper.log('wrting output')
-    writetofile(filename,filecontent)
+    writetofile(filename, filecontent)
 
 
 def initializefile(filename):
@@ -91,14 +95,14 @@ def initializefile(filename):
 
 
 def readlines(file):
-    with open(file+codefileextension, 'r') as f:
+    with open(file + codefileextension, 'r') as f:
         return f.readlines()
 
 
 def writetofile(filename, content):
-    with open(filename+outputfileextension, 'w') as f:
+    with open(filename + outputfileextension, 'w') as f:
         for index, value in enumerate(content):
-            line='{}: {}'.format(index, value)
+            line = '{}: {}'.format(index, value)
             if True:
                 print(line)
             f.write(line)
@@ -113,7 +117,6 @@ def trimcomments(line):
 
 def getglobals():
     return {'msb': msb}
-
 
 
 def msb(value):
@@ -219,8 +222,8 @@ class FileCompiler:
             raise EOFError
         else:
             result = self.lines[self.linenumber]
-            self.linenumber += 1
             throwhelper.setlinenumber(self.linenumber)
+            self.linenumber += 1
             if not result:
                 return self.nextline()
             else:
