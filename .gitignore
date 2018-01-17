@@ -17,3 +17,8 @@ env/
 
 #idk
 /.idea
+
+
+*.g
+*.gb
+*.gm.py
