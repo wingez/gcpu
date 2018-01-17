@@ -3,7 +3,7 @@ from gcpu import bithelper
 from gcpu.microcode import core
 from gcpu.microcode import syntax
 
-from gcpu.compiler import newcompiler
+from gcpu.compiler import compiler
 
 
 def compilefile(args):
@@ -11,7 +11,7 @@ def compilefile(args):
     file = args[1]
     core.loadinstructions(microcode)
     syntax.printall()
-    newcompiler.compile(file)
+    compiler.compile(file)
 
 
 def microcode(args):

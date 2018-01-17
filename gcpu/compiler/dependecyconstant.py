@@ -1,6 +1,6 @@
 import gcpu.compiler.throwhelper as throwhelper
 from gcpu.compiler.memory import MemorySegment
-from gcpu.compiler import newcompiler
+from gcpu.compiler import compiler
 
 
 class DependencyConstant:
@@ -11,7 +11,7 @@ class DependencyConstant:
         self.dependencies = dependencies
 
     def __add__(self, other):
-        if newcompiler.phase != 1:
+        if compiler.phase != 1:
             throwhelper.throw('operation not allowed in phase 2')
 
         if type(other) is DependencyConstant:

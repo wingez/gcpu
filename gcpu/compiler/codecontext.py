@@ -1,5 +1,5 @@
 from gcpu.compiler.memory import MemorySegment
-from gcpu.compiler import newcompiler, throwhelper
+from gcpu.compiler import compiler, throwhelper
 from gcpu.compiler.dependecyconstant import DependencyConstant
 from gcpu.microcode import syntax
 
@@ -22,11 +22,11 @@ def compile(compiler, startline: str):
     function = None
 
     name = startline.lstrip(startsymbol)
-    if newcompiler.phase == 1:
+    if compiler.phase == 1:
         function = CodeFunction(name, compiler)
         function.indices = readindices(compiler)
         compiler.functions[name]=function
-    elif newcompiler.phase == 2:
+    elif compiler.phase == 2:
         function = compiler.functions[name]
         if not function.isallocated:
             return
@@ -40,19 +40,19 @@ def compile(compiler, startline: str):
             break
         elif isindex(line):
             i = index(line)
-            if newcompiler.phase == 1:
+            if compiler.phase == 1:
                 function.indices[i] = offset
-            elif newcompiler.phase == 2 and offset is not function.indices[i]:
+            elif compiler.phase == 2 and offset is not function.indices[i]:
                 throwhelper.throw('offset doesnt match second pass', function=function, offset=offset)
 
         else:
             mnemonic, args = parseprogramstatement(line)
             args = evaluateargs(args, locals, function)
             s = getsyntax(mnemonic, args)
-            if newcompiler.phase == 1:
+            if compiler.phase == 1:
                 function.size += s.size
                 offset += s.size
-            elif newcompiler.phase == 2:
+            elif compiler.phase == 2:
                 function.content.extend(s.compile(args))
 
 def readindices(compiler):
@@ -81,10 +81,10 @@ def evaluateargs(args, vars, function: CodeFunction):
     result = [eval(x, locals=vars) for x in args]
     for i, arg in enumerate(result):
         if type(arg) is DependencyConstant:
-            if newcompiler.phase == 1:
+            if compiler.phase == 1:
                 result[i] = 0
                 function.dependencies.append(arg.dependencies)
-            elif newcompiler.phase == 2:
+            elif compiler.phase == 2:
                 throwhelper.throw('type: dependencyconstant invalid in phase 2')
     return result
 
