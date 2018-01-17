@@ -6,6 +6,8 @@ from gcpu.compiler.memory import MemoryAllocator, MemorySegment
 dependencyimportsymbols = '#import '
 commentsymbols = '//'
 entryfunctionname = 'main'
+codefileextension='.g'
+outputfileextension='.gb'
 
 """
 Phases:
@@ -61,9 +63,9 @@ def compile(filename: str):
     throwhelper.log('ending compilation phase 2')
 
     throwhelper.log('generating output file')
-    file = allocator.generatefilecontent()
-    for index, value in enumerate(file):
-        print('{}: {}'.format(index, value))
+    filecontent = allocator.generatefilecontent()
+    throwhelper.log('wrting output')
+    writetofile(filename,filecontent)
 
 
 def initializefile(filename):
@@ -89,8 +91,18 @@ def initializefile(filename):
 
 
 def readlines(file):
-    with open(file, 'r') as f:
+    with open(file+codefileextension, 'r') as f:
         return f.readlines()
+
+
+def writetofile(filename, content):
+    with open(filename+outputfileextension, 'w') as f:
+        for index, value in enumerate(content):
+            line='{}: {}'.format(index, value)
+            if True:
+                print(line)
+            f.write(line)
+            f.write('\n')
 
 
 def trimcomments(line):
