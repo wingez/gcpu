@@ -35,11 +35,15 @@ def compile(comp, startline: str):
             return
 
     if compiler.phase == 1:
-        comp.addobject(name, DependencyConstant(function))
+        depdonstant = DependencyConstant(function)
+        comp.addobject(name, depdonstant)
+        locals[name] = depdonstant
     elif compiler.phase == 2:
         comp.addobject(name, function.address)
 
-    locals.update(function.indices)
+    for name, i in function.indices.items():
+        locals[name] = function.address + i
+    # locals.update(function.indices)
 
     offset = 0
     while True:
@@ -59,9 +63,9 @@ def compile(comp, startline: str):
             s = getsyntax(mnemonic, args)
             if compiler.phase == 1:
                 function.size += s.size
-                offset += s.size
             elif compiler.phase == 2:
                 function.content.extend(s.compile(args))
+            offset += s.size
 
 
 def readindices(comp):
