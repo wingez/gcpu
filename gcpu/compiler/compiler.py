@@ -169,12 +169,11 @@ class FileCompiler:
     def exportidentifiers(self):
         result = {}
         for name, func in self.functions.items():
-            if phase != 2 or func.isallocated:
-                identifier = self.name + '_' + name
-                if phase == 1:
-                    result[identifier] = DependencyConstant(func)
-                elif phase == 2:
-                    result[identifier] = func.address
+            identifier = self.name + '_' + name
+            if phase == 1:
+                result[identifier] = DependencyConstant(func)
+            elif phase == 2:
+                result[identifier] = func.address
 
         for name, value in self.defines.items():
             result[self.name + '_' + name] = value
@@ -184,7 +183,7 @@ class FileCompiler:
     def getidentifiers(self):
         result = getglobals()
         for dependency in self.dependencies:
-            self.locals.update(dependency.getidentifiers())
+            result.update(dependency.exportidentifiers())
 
         if phase == 1:
             pass
@@ -205,7 +204,7 @@ class FileCompiler:
         throwhelper.file = self.name
 
         self.locals = self.getidentifiers()
-        self.setstate(-1)
+        self.setstate(0)
 
         # recursevly compile the file
         maincontext.compile(self)
