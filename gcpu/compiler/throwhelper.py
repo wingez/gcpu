@@ -36,10 +36,10 @@ def warn(message):
     warningStream.write('\n')
 
 
-def generateerrormessage(errortype, desc, **location):
+def generateerrormessage(desc, **location):
     loc = ', '.join(['{}:{}'.format(key, value) for key, value in location.items()])
 
-    return '{}| {}: {}'.format(errortype, loc, desc)
+    return '| {}: {}'.format(loc, desc)
 
 
 def log(message):
