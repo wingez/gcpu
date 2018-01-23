@@ -39,6 +39,9 @@ def compile(filename: str, outputdir: str):
     basefile = initializefile(filename)
     throwhelper.log('ending initialization and imports\n')
 
+    throwhelper.log('compileorder is: ' + ', '.join('{}: {}'.format(i + 1, x.name) for i, x in enumerate(compileOrder)))
+    throwhelper.log('')
+
     # perform compilation phase 1
     throwhelper.log('starting compilation phase 1')
     phase = 1
