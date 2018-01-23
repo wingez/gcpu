@@ -18,7 +18,7 @@ def microcode(args):
     name = args[0]
     core.loadinstructions(name)
     syntax.printall()
-
+    core.writeinstructiondatatofile('mc'+name,'output')
 
 if __name__ == '__main__':
 

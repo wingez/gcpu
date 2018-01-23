@@ -6,11 +6,15 @@ from .signal import Signal
 from .register import Register
 from .constant import Constant
 from gcpu.microcode import syntax
+import os
 
 # import BetterExec
 
 # from Syntax import Syntax, CreateSyntax
 # from .Syntax import Syntax, CreateSyntax
+
+outputfileextensions = '.gb'
+microcodefileextension='.gm.py'
 
 # the instructionsset
 instructions = []
@@ -90,6 +94,7 @@ def getinstructionsize(args, compilefunction):
 def loadinstructions(filename):
     # TODO preparatiosn
 
+    filename+=microcodefileextension
     # Parse file
     print('parsing file ' + filename)
     betterexec(open(filename).read(), description=filename)
@@ -108,6 +113,17 @@ def loadinstructions(filename):
             print('error compiling instruction ', instruction.id, ' ', instruction.group)
             raise e
     print('Compile successful!')
+
+
+def writeinstructiondatatofile(filename: str, outputdir: str):
+    filename = os.path.join(outputdir, filename) +outputfileextensions
+    with open(filename, 'w') as f:
+        for index, value in enumerate(instructiondata):
+            line = '{} {}'.format(index, value)
+            #if True:
+            #   print(line)
+            f.write(line)
+            f.write('\n')
 
 
 def assignidtoinstructions():
