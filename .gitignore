@@ -18,6 +18,7 @@ env/
 #idk
 /.idea
 
+/output
 
 *.g
 *.gb

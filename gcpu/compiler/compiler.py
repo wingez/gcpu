@@ -2,6 +2,7 @@ from gcpu.compiler import throwhelper
 from gcpu.compiler import maincontext
 from gcpu.compiler.dependecyconstant import DependencyConstant
 from gcpu.compiler.memory import MemoryAllocator, MemorySegment
+import os
 
 dependencyimportsymbols = '#import '
 commentsymbols = '//'
@@ -23,13 +24,13 @@ filesCurrentlyIncluding = []
 compileOrder = []
 
 
-def compile(filename: str):
+def compile(filename: str, outputdir: str):
     global phase
     filesIncluded.clear()
     filesCurrentlyIncluding.clear()
     compileOrder.clear()
 
-    throwhelper.log('starting compilation of file ' + filename+'\n')
+    throwhelper.log('starting compilation of file ' + filename + '\n')
 
     throwhelper.log('starting initialization and imports')
     phase = 0
@@ -37,7 +38,6 @@ def compile(filename: str):
     # filesIncluded and compileOrder is now populated
     basefile = initializefile(filename)
     throwhelper.log('ending initialization and imports\n')
-
 
     # perform compilation phase 1
     throwhelper.log('starting compilation phase 1')
@@ -69,7 +69,8 @@ def compile(filename: str):
     throwhelper.log('generating output file')
     filecontent = allocator.generatefilecontent()
     throwhelper.log('wrting output')
-    writetofile(filename, filecontent)
+    outputfilename = os.path.join(outputdir, filename) + outputfileextension
+    writetofile(outputfilename, filecontent)
 
 
 def initializefile(filename):
@@ -100,9 +101,9 @@ def readlines(file):
 
 
 def writetofile(filename, content):
-    with open(filename + outputfileextension, 'w') as f:
+    with open(filename, 'w') as f:
         for index, value in enumerate(content):
-            line = '{}: {}'.format(index, value)
+            line = '{} {}'.format(index, value)
             if True:
                 print(line)
             f.write(line)

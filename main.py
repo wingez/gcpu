@@ -11,7 +11,7 @@ def compilefile(args):
     file = args[1]
     core.loadinstructions(microcode)
     syntax.printall()
-    compiler.compile(file)
+    compiler.compile(file, 'output')
 
 
 def microcode(args):
