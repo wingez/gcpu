@@ -7,6 +7,7 @@ from .register import Register
 from .constant import Constant
 from gcpu.microcode import syntax
 import os
+from gcpu.compiler.pointer import Pointer
 
 # import BetterExec
 
@@ -82,7 +83,11 @@ def CreateInstruction(mnemonic='', group='uncategorized', desc='', id=None,
     return instr
 
 
-defaultparamvalues = {Register: Register(0, '', [], []), int: 0, Constant: None}
+defaultparamvalues = {
+    Register: Register(0, '', [], []),
+    int: 0,
+    Pointer: Pointer(0),
+    Constant: None}
 
 
 def getinstructionsize(args, compilefunction):
