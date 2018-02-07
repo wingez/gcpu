@@ -21,6 +21,9 @@ class Pointer:
 
         raise NotImplementedError
 
+    def __str__(self):
+        return str(self.address)
+
     def __int__(self):
         return self.address
 
