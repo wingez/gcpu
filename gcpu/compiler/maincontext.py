@@ -1,7 +1,6 @@
-from gcpu.compiler import codecontext, compiler, throwhelper
+from gcpu.compiler import codecontext, compiler, throwhelper, pointer
 from gcpu.compiler.defstatement import defstatement, isdefstatement
-from gcpu.compiler.memory import MemorySegment
-from gcpu.compiler.dependecyconstant import DependencyConstant
+from gcpu.compiler.memstatement import memstatement, ismemstatement
 
 
 def compile(comp):
@@ -17,17 +16,16 @@ def compile(comp):
             codecontext.compile(comp, line)
         elif isdefstatement(line):
             id, result = defstatement(line, comp.locals)
+            comp.addobject(id, result)
 
-            if type(result) is MemorySegment:
-                if compiler.phase == 1:
-                    result.id = id
-                    comp.memsegments[id] = result
-                    comp.addobject(id, DependencyConstant(result))
-                elif compiler.phase == 2:
-                    comp.memsegments[id].content = result.content
-                    comp.addobject(id, comp.memsegments[id].address)
-            else:
-                comp.addobject(id, result)
+        elif ismemstatement(line):
+            id, result = memstatement(line, comp.locals)
+            if compiler.phase == 1:
+                comp.memsegments[id] = result
+                comp.addobject(id, pointer.ptr(result))
+            elif compiler.phase == 2:
+                comp.memsegments[id].content = result.content
+                comp.addobject(id, pointer.ptr(comp.memsegments[id]))
 
         else:
             throwhelper.throw('unable to parse. Line: ' + line)

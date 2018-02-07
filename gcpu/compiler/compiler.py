@@ -1,6 +1,5 @@
 from gcpu.compiler import throwhelper
 from gcpu.compiler import maincontext
-from gcpu.compiler.dependecyconstant import DependencyConstant
 from gcpu.compiler.memory import MemoryAllocator, MemorySegment
 import os
 
@@ -120,20 +119,8 @@ def trimcomments(line):
 
 
 def getglobals():
-    return {'msb': msb}
+    return {}
 
-
-def msb(value):
-    result = MemorySegment()
-    result.size = 2
-
-    if phase == 1:
-        if issubclass(type(value), DependencyConstant):
-            result.dependencies.append(value)
-    if phase == 2:
-        result.content = [value]
-
-    return result
 
 
 class FileCompiler:
@@ -175,12 +162,6 @@ class FileCompiler:
 
     def exportidentifiers(self):
         result = {}
-        for name, func in self.functions.items():
-            identifier = self.name + '_' + name
-            if phase == 1:
-                result[identifier] = DependencyConstant(func)
-            elif phase == 2:
-                result[identifier] = func.address
 
         for name, value in self.defines.items():
             result[self.name + '_' + name] = value
