@@ -59,6 +59,7 @@ def compile(filename: str, outputdir: str):
     allocator = MemoryAllocator()
     allocator.allocatealldependents(entryfunction)
     allocator.asignaddresses(entryfunction)
+    throwhelper.log('total memory usage: ' + str(allocator.getusedmemory()))
     throwhelper.log('ending memory asignments\n')
 
     throwhelper.log('starting compilation phase 2')
