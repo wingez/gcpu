@@ -1,21 +1,13 @@
-# from .. import bithelper
-import uuid
-from ..betterexec import betterexec
+from gcpu.betterexec import betterexec
 
-from .signal import Signal
-from .register import Register
-from .constant import Constant
+from gcpu.microcode.register import Register
+from gcpu.microcode.constant import Constant
 from gcpu.microcode import syntax
 import os
 from gcpu.compiler.pointer import Pointer
 
-# import BetterExec
-
-# from Syntax import Syntax, CreateSyntax
-# from .Syntax import Syntax, CreateSyntax
-
 outputfileextensions = '.gb'
-microcodefileextension='.gm.py'
+microcodefileextension = '.gm.py'
 
 # the instructionsset
 instructions = []
@@ -71,11 +63,8 @@ def CreateInstruction(mnemonic='', group='uncategorized', desc='', id=None,
 
     if mnemonic:
         priority = 0
-        if args:
-            for a in args:
-                if 'fixvalue' in a.keys():
-                    priority = 1
-                    break
+        if args and any(['fixvalue' in a.keys() for a in args]):
+            priority = 1
         syntax.create(mnemonic, args, instr, priority)
 
     instructions.append(instr)
@@ -99,7 +88,7 @@ def getinstructionsize(args, compilefunction):
 def loadinstructions(filename):
     # TODO preparatiosn
 
-    filename+=microcodefileextension
+    filename += microcodefileextension
     # Parse file
     print('parsing file ' + filename)
     betterexec(open(filename).read(), description=filename)
@@ -121,12 +110,10 @@ def loadinstructions(filename):
 
 
 def writeinstructiondatatofile(filename: str, outputdir: str):
-    filename = os.path.join(outputdir, filename) +outputfileextensions
+    filename = os.path.join(outputdir, filename) + outputfileextensions
     with open(filename, 'w') as f:
         for index, value in enumerate(instructiondata):
             line = '{} {}'.format(index, value)
-            #if True:
-            #   print(line)
             f.write(line)
             f.write('\n')
 
@@ -142,11 +129,11 @@ def assignidtoinstructions():
                 raise ValueError('double assignment of id ' + str(i.id))
             usedids[i.id] = True
 
-    instructionstoassignid = sorted([x for x in instructions if x.id is None], key=lambda instr: instr.group)
+    toassignid = sorted([x for x in instructions if x.id is None], key=lambda instr: instr.group)
 
     lowestfreeid = 0
 
-    for instr in instructionstoassignid:
+    for instr in toassignid:
         while usedids[lowestfreeid]:
             lowestfreeid += 1
             if lowestfreeid >= 2 ** 8:
@@ -170,18 +157,9 @@ def setinstructiondata(instruction, stageindex, flags, signals):
 
 def compileinstructionstages(instruction):
     for stageindex, stage in enumerate(instruction.stages):
-
         hasflags = type(stage) is dict
-
         for flags in range(0, 4):
-
-            stagesignals = None
-
-            if hasflags:
-                stagesignals = GetStageDataWithMatchingFlags(stage, flags)
-            else:
-                stagesignals = stage
-
+            stagesignals = getstagedatawithcorrectflags(stage, flags) if hasflags else stage
             setinstructiondata(instruction, stageindex, flags, stagesignals)
 
 
@@ -193,7 +171,7 @@ flagspriority = [
     ['ovfzero', 'ovf', 'zero', 'fill']]
 
 
-def GetStageDataWithMatchingFlags(stage, flags):
+def getstagedatawithcorrectflags(stage, flags):
     for p in flagspriority[flags]:
         for s in stage:
             if s == p:
