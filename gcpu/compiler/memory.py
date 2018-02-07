@@ -1,5 +1,6 @@
 from typing import List
 import gcpu.compiler.throwhelper as throwhelper
+from collections import OrderedDict
 
 
 class MemorySegment:
@@ -19,7 +20,7 @@ class MemorySegment:
 class MemoryAllocator:
 
     def __init__(self, maxsize=2 ** 16):
-        self.allocated = set()
+        self.allocated = OrderedDict()
         self.currentaddress = 0
         self.maxsize = maxsize
 
@@ -28,7 +29,7 @@ class MemoryAllocator:
         if rootobject not in self.allocated:
             rootobject.isallocated = True
 
-            self.allocated.add(rootobject)
+            self.allocated[rootobject] = True
 
         if rootobject in allocating:
             return
