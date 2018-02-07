@@ -1,7 +1,7 @@
 from gcpu.compiler import codecontext, compiler, throwhelper, pointer
 from gcpu.compiler.defstatement import defstatement, isdefstatement
 from gcpu.compiler.memstatement import memstatement, ismemstatement
-
+from gcpu.compiler.logstatement import logstatement
 
 def compile(comp):
     while True:
@@ -12,7 +12,9 @@ def compile(comp):
         except EOFError:
             return
 
-        if codecontext.check(line):
+        if logstatement(line,comp.locals,comp):
+            pass
+        elif codecontext.check(line):
             codecontext.compile(comp, line)
         elif isdefstatement(line):
             id, result = defstatement(line, comp.locals)
