@@ -62,7 +62,7 @@ def CreateInstruction(mnemonic='', group='uncategorized', desc='', id=None,
         instr.size += getinstructionsize(args, compilefunc)
 
     if mnemonic:
-        priority = 1 if any([not arg.isgeneric for arg in args]) else 0
+        priority = 1 if not all([arg.isgeneric for arg in args]) else 0
         syntax.create(mnemonic, args, instr, priority)
 
     instructions.append(instr)
