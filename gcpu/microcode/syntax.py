@@ -33,7 +33,7 @@ def printall():
 
 class Syntax(object):
 
-    def __init__(self, mnemonic, instruction, args=[], priority=0):
+    def __init__(self, mnemonic, instruction, args=(), priority=0):
         self.mnemonic = mnemonic
         self.args = args
         self.priority = priority
@@ -41,31 +41,38 @@ class Syntax(object):
         self.size = instruction.size
 
     def compile(self, args):
-        argstocompilewith = [args[i] for i in range(len(args)) if 'fixvalue' not in self.args[i]]
+        argstocompilewith = [arg for arg, s in zip(args, self.args) if s.include]
         return self.instruction.compile(argstocompilewith)
 
     def matchesargs(self, args):
-        def argvalidator(providedarg, syntaxarg):
-            if type(providedarg) is syntaxarg['type']:
-                if 'fixvalue' in syntaxarg and providedarg is not syntaxarg['fixvalue']:
-                    return False
-                return True
-            return False
-
         if len(self.args) != len(args):
             return False
-        if all(argvalidator(args[i], self.args[i]) for i in range(len(args))):
-            return self
-        return False
+
+        return all([a == b for a, b in zip(args, self.args)])
 
     def __str__(self):
-        result = '{}, {}'.format(self.instruction.id,self.mnemonic)
-        for arg in self.args:
-            if 'fixvalue' in arg:
-                result += ' {}'.format(str(arg['fixvalue']))
-            else:
-                if 'name' in arg:
-                    result += ' <{}:{}>'.format(arg['name'], arg['type'].__name__)
-                else:
-                    result += ' <{}>'.format(arg['type'].__name__)
-        return result
+        result = ['{}, {}'.format(self.instruction.id, self.mnemonic)]
+        result += [str(arg) for arg in self.args]
+        return ' '.join(result)
+
+
+class Argument:
+
+    def __init__(self, arg, name='', include=True):
+        self.name = name
+        self.isgeneric = type(arg) is type
+        self.arg = arg
+        self.include = include
+
+    def __eq__(self, other):
+        if self.isgeneric:
+            return type(other) is self.arg
+        else:
+            return other == self.arg
+
+    def __str__(self):
+        if not self.isgeneric:
+            return str(self.arg)
+        if self.name:
+            return '<{}:{}>'.format(self.name, self.arg.__name__)
+        return '<{}>'.format(self.arg.__name__)

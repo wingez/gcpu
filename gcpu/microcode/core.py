@@ -62,9 +62,7 @@ def CreateInstruction(mnemonic='', group='uncategorized', desc='', id=None,
         instr.size += getinstructionsize(args, compilefunc)
 
     if mnemonic:
-        priority = 0
-        if args and any(['fixvalue' in a.keys() for a in args]):
-            priority = 1
+        priority = 1 if any([not arg.isgeneric for arg in args]) else 0
         syntax.create(mnemonic, args, instr, priority)
 
     instructions.append(instr)
@@ -80,8 +78,7 @@ defaultparamvalues = {
 
 
 def getinstructionsize(args, compilefunction):
-    params = [defaultparamvalues[x['type']] for x in args if 'fixvalue' not in x and 'exclude' not in x]
-
+    params = [defaultparamvalues[arg.arg] if arg.isgeneric else arg.arg for arg in args if arg.include]
     return len(compilefunction(*params))
 
 
