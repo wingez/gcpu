@@ -1,7 +1,8 @@
 from gcpu.compiler.memory import MemorySegment
 from gcpu.compiler import compiler, throwhelper
-from gcpu.compiler.dependecyconstant import DependencyConstant
 from gcpu.microcode import syntax
+
+from gcpu.compiler.pointer import Pointer, ptr
 
 startsymbol = '%'
 endsymbol = 'endf'
@@ -34,16 +35,12 @@ def compile(comp, startline: str):
         if not function.isallocated:
             return
 
-    if compiler.phase == 1:
-        depdonstant = DependencyConstant(function)
-        comp.addobject(name, depdonstant)
-        locals[name] = depdonstant
-    elif compiler.phase == 2:
-        comp.addobject(name, function.address)
+    p = ptr(function)
+    comp.addobject(name, p)
+    locals[name] = p
 
     for name, i in function.indices.items():
-        locals[name] = function.address + i
-    # locals.update(function.indices)
+        locals[name] = p + i
 
     offset = 0
     while True:
@@ -93,12 +90,9 @@ def parseprogramstatement(statement: str):
 def evaluateargs(args, vars, function: CodeFunction):
     result = [eval(x, None, vars) for x in args]
     for i, arg in enumerate(result):
-        if type(arg) is DependencyConstant:
-            if compiler.phase == 1:
-                result[i] = 0
-                function.dependencies.extend(arg.dependencies)
-            elif compiler.phase == 2:
-                throwhelper.throw('type: dependencyconstant invalid in phase 2')
+        if type(arg) is Pointer:
+            function.dependencies.extend(arg.dependencies)
+
     return result
 
 
