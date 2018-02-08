@@ -70,6 +70,8 @@ def compile(filename: str, outputdir: str):
         file.compilephase2()
     throwhelper.log('ending compilation phase 2\n')
 
+    throwhelper.log('compile successful!\n')
+
     throwhelper.log('generating output file')
     filecontent = allocator.generatefilecontent()
     throwhelper.log('wrting output')
@@ -117,7 +119,7 @@ def writetofile(filename, content):
 def trimcomments(line):
     if commentsymbols in line:
         line = line.partition(commentsymbols)[0]
-    return line.strip('\n')
+    return line.strip()
 
 
 def getglobals():
