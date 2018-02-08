@@ -77,7 +77,7 @@ class CodeContext(Context):
         return self.function.name, ptr(self.function)
 
     def parsestatement(self, statement: str):
-        tmp = statement.split(' ')
+        tmp = statement.split()
         mnemonic = tmp[0].lower()
         args = tmp[1:]
         return mnemonic, args
