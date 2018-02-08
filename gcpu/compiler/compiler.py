@@ -1,5 +1,6 @@
 from gcpu.compiler import throwhelper
-from gcpu.compiler import maincontext
+#from gcpu.compiler import maincontext
+from gcpu.compiler.contexts.maincontext import MainContext
 from gcpu.compiler.memory import MemoryAllocator, MemorySegment
 import os
 
@@ -196,7 +197,8 @@ class FileCompiler:
         self.setstate(0)
 
         # recursevly compile the file
-        maincontext.compile(self)
+        context = MainContext(self)
+        context.compile()
 
     def addobject(self, name, obj):
         self.defines[name] = obj

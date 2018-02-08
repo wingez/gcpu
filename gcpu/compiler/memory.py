@@ -17,6 +17,14 @@ class MemorySegment:
         return self.id
 
 
+class CodeFunction(MemorySegment):
+
+    def __init__(self, name: str):
+        self.name = name
+        self.indices = {}
+        super().__init__('function ' + name)
+
+
 class MemoryAllocator:
 
     def __init__(self, maxsize=2 ** 16):
