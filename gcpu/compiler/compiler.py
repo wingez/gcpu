@@ -23,6 +23,7 @@ filesIncluded = {}
 filesCurrentlyIncluding = []
 compileOrder = []
 
+maxfilesize=2**15
 
 def compile(filename: str, outputdir: str):
     global phase
@@ -57,7 +58,7 @@ def compile(filename: str, outputdir: str):
                 entryfunctionname, basefile.name
             ))
     entryfunction = basefile.functions[entryfunctionname]
-    allocator = MemoryAllocator()
+    allocator = MemoryAllocator(maxfilesize)
     allocator.allocatealldependents(entryfunction)
     allocator.asignaddresses(entryfunction)
     throwhelper.log('total memory usage: ' + str(allocator.getusedmemory()))
@@ -74,7 +75,7 @@ def compile(filename: str, outputdir: str):
 
     throwhelper.log('generating output file')
     filecontent = allocator.generatefilecontent()
-    throwhelper.log('wrting output')
+    throwhelper.log('writing output')
     outputfilename = os.path.join(outputdir, filename) + outputfileextension
     writetofile(outputfilename, filecontent)
 

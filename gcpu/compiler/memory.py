@@ -27,7 +27,7 @@ class CodeFunction(MemorySegment):
 
 class MemoryAllocator:
 
-    def __init__(self, maxsize=2 ** 16):
+    def __init__(self, maxsize:int):
         self.allocated = OrderedDict()
         self.currentaddress = 0
         self.maxsize = maxsize
