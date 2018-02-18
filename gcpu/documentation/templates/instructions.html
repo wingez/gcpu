@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<h2>Instruktioner</h2>
+
+{% for group in groups %}
+
+<table>
+    <caption>{{group.name}}</caption>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Index</th>
+            <th>Syntax</th>
+            <th>Beskrivning</th>
+        </tr>
+    </thead>
+    <tfoot>
+        <tr>
+            <td>Totalt: {{group.count}}</td>
+        </tr>
+    </tfoot>
+    <tbody>
+    {% for instr in group.instructions %}
+        <tr class="{{loop.cycle('odd','even')}}">
+            <td>{{instr.name}}</td>
+            <td>{{instr.index}}</td>
+            <td>{{instr.syntax}}</td>
+            <td>{{instr.desc}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
+{% endblock %}

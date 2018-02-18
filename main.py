@@ -18,7 +18,8 @@ def microcode(args):
     name = args[0]
     core.loadinstructions(name)
     syntax.printall()
-    core.writeinstructiondatatofile('mc'+name,'output')
+    core.writeinstructiondatatofile('mc' + name, 'output')
+
 
 if __name__ == '__main__':
 
@@ -29,3 +30,9 @@ if __name__ == '__main__':
         compilefile(args)
     elif action == 'microcode':
         microcode(args)
+    elif action == 'doc':
+        import gcpu.documentation.generator as docgenerator
+
+        if args[0] == 'instructions':
+            microcode(args[1:])
+            docgenerator.render_instructions()
