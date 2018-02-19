@@ -23,7 +23,7 @@ def cli(ctx, verbose, version):
 @click.argument('file', type=click.Path(exists=True))
 @pass_verbose
 def compile(verbose, suppress_warnings, configfile, file):
-    core.loadinstructions(configfile)
+    core.loadconfig(configfile)
     compiler.compile(file, 'output')
     print('done')
 
@@ -32,7 +32,7 @@ def compile(verbose, suppress_warnings, configfile, file):
 @click.argument('configfile', type=click.Path(exists=True))
 @pass_verbose
 def microcode(verbose, configfile):
-    core.loadinstructions(configfile)
+    core.loadconfig(configfile)
     print('done')
 
 
@@ -41,5 +41,5 @@ def microcode(verbose, configfile):
 @click.option('--syntaxes', '-s', is_flag=True, help='Print all availiable syntaxes')
 @pass_verbose
 def check(verbose, syntaxes, configfile):
-    core.loadinstructions(configfile)
+    core.loadconfig(configfile)
     print('done')

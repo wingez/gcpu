@@ -81,12 +81,10 @@ def getinstructionsize(args, compilefunction):
     return len(compilefunction(*params))
 
 
-def loadinstructions(filename):
-    # TODO preparatiosn
-
+def loadconfig(configfilename):
     # Parse file
-    print('parsing file ' + filename)
-    betterexec(open(filename).read(), description=filename)
+    print('parsing file ' + configfilename)
+    betterexec(open(configfilename).read(), description=configfilename)
 
     # instructions and registers assume has valid data
 
