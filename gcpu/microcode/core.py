@@ -7,7 +7,6 @@ import os
 from gcpu.compiler.pointer import Pointer
 
 outputfileextensions = '.gb'
-microcodefileextension = '.gm.py'
 
 # the instructionsset
 instructions = []
@@ -85,7 +84,6 @@ def getinstructionsize(args, compilefunction):
 def loadinstructions(filename):
     # TODO preparatiosn
 
-    filename += microcodefileextension
     # Parse file
     print('parsing file ' + filename)
     betterexec(open(filename).read(), description=filename)
