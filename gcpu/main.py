@@ -27,9 +27,19 @@ def compile(verbose, suppress_warnings, configfile, file):
     compiler.compile(file, 'output')
     print('done')
 
+
 @cli.command()
 @click.argument('configfile', type=click.Path(exists=True))
 @pass_verbose
 def microcode(verbose, configfile):
+    core.loadinstructions(configfile)
+    print('done')
+
+
+@cli.command()
+@click.argument('configfile', type=click.Path(exists=True))
+@click.option('--syntaxes', '-s', is_flag=True, help='Print all availiable syntaxes')
+@pass_verbose
+def check(verbose, syntaxes, configfile):
     core.loadinstructions(configfile)
     print('done')
