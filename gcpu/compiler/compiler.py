@@ -7,7 +7,6 @@ import os
 dependencyimportsymbols = '#import '
 commentsymbols = '//'
 entryfunctionname = 'main'
-codefileextension = '.g'
 outputfileextension = '.gb'
 
 """
@@ -103,7 +102,7 @@ def initializefile(filename):
 
 
 def readlines(file):
-    with open(file + codefileextension, 'r') as f:
+    with open(file, 'r') as f:
         return f.readlines()
 
 
