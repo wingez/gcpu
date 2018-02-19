@@ -1,5 +1,5 @@
 from gcpu.compiler import throwhelper
-#from gcpu.compiler import maincontext
+# from gcpu.compiler import maincontext
 from gcpu.compiler.contexts.maincontext import MainContext
 from gcpu.compiler.memory import MemoryAllocator, MemorySegment
 import os
@@ -7,6 +7,7 @@ import os
 dependencyimportsymbols = '#import '
 commentsymbols = '//'
 entryfunctionname = 'main'
+codefileextension = '.g'
 outputfileextension = '.gb'
 
 """
@@ -22,7 +23,7 @@ filesIncluded = {}
 filesCurrentlyIncluding = []
 compileOrder = []
 
-maxfilesize=2**15
+maxfilesize = 2 ** 15
 
 def compile(filename: str, outputdir: str):
     global phase
@@ -102,7 +103,10 @@ def initializefile(filename):
 
 
 def readlines(file):
-    with open(file, 'r') as f:
+    name, ext = os.path.splitext(file)
+    ext = ext or codefileextension
+
+    with open(name + ext, 'r') as f:
         return f.readlines()
 
 
@@ -124,7 +128,6 @@ def trimcomments(line):
 
 def getglobals():
     return {}
-
 
 
 class FileCompiler:
