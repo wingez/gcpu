@@ -5,14 +5,15 @@ from gcpu.microcode import syntax, flags
 from gcpu.compiler.pointer import Pointer
 
 from operator import attrgetter
-from itertools import product, count
+from itertools import product, count, chain
 import os
-
 
 outputfileextensions = '.gb'
 
 # the instructionsset
 instructions = []
+
+log = lambda s: s
 
 # array representing memory content of the Microcode-ROMs
 # as of 1.5 for 15bits(8instr,5stage,2flags)=32k * 4byte
@@ -85,26 +86,23 @@ def CreateFlag(name, index):
 
 def CreateInstruction(name, mnemonic='', group='uncategorized', desc='', id=None,
                       stages=None, args=(), compilefunc=None):
-    if conf['use_microcode'] and not stages:
-        raise ValueError('No stages found')
+    i = Instruction(name)
+    i.group, i.description, i.id, i.compilefunction = group, desc, id, compilefunc
 
-    instr = Instruction(name)
-    instr.group = group
-    instr.description = desc
-    instr.stages = parsestages(stages)
-    instr.id = id
-    instr.compilefunction = compilefunc
+    if conf['use_microcode']:
+        if not stages:
+            raise ValueError('No stages found')
+        i.stages = parsestages(stages)
 
     if compilefunc:
-        instr.size += getinstructionsize(args, compilefunc)
+        i.size = getinstructionsize(args, compilefunc)
 
-    mnemonic = mnemonic or name
     priority = 1 if not all([arg.isgeneric for arg in args]) else 0
-    syntax.create(mnemonic, args, instr, priority)
+    syntax.create(mnemonic or name, args, i, priority)
 
-    instructions.append(instr)
+    instructions.append(i)
 
-    return instr
+    return i
 
 
 defaultparamvalues = {
@@ -120,10 +118,18 @@ class Stage:
 
     def getsignalsfromflag(self, flag):
         part = max((x for x in self.parts if x.matchesflags(flag)),
-                   key=attrgetter('priority'), default=None)
+                   key=attrgetter('priority'), default=False)
         if not part:
             raise ValueError('no stage found for flags {}'.format(flag))
         return part.signals
+
+    def getusedflags(self):
+        result = []
+        for part in self.parts:
+            for f in chain(part.flag.musthave, part.flag.mustnothave):
+                if f not in result:
+                    result.append(f)
+        return f
 
 
 class StagePart:
@@ -131,8 +137,8 @@ class StagePart:
         self.flags, self.signals = flags, signals
         self.priority = 0 if not flags else flags.priority
 
-    def matchesflags(self, flags):
-        return self.flags.compatible(flags)
+    def matchesflags(self, flag):
+        return self.flags.compatible(flag)
 
 
 def parsestages(stages):
@@ -162,9 +168,12 @@ def getinstructionsize(args, compilefunction):
 
 
 def loadconfig(configfilename, verbose=True):
-    # Parse file
     if verbose:
-        print('loading configfile: ' + configfilename)
+        global log
+        log = lambda s: print(s)
+
+    # Parse file
+    log('loading configfile: {}'.format(configfilename))
 
     betterexec.exec(open(configfilename).read(), description=configfilename)
 
