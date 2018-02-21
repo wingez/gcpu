@@ -1,4 +1,3 @@
-
 import sys
 import traceback
 
@@ -6,9 +5,14 @@ import traceback
 class InterpreterError(Exception): pass
 
 
-def betterexec(cmd, globals=None, locals=None, description='source string'):
+_myexec = exec
+
+
+def exec(cmd, description='source string'):
     try:
-        exec(cmd, globals, locals)
+        d=dict(locals(),**globals())
+        c = c   ompile(cmd, '<string>', 'exec')
+        _myexec(c, d,d)
     except SyntaxError as err:
         error_class = err.__class__.__name__
         detail = err.args[0]
