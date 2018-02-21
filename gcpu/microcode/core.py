@@ -182,7 +182,7 @@ def loadconfig(configfilename, verbose=True):
 
     if conf['use_microcode']:
         global instructiondata
-        instructiondata = [conf['microcode_default']] * conf['microcode_size']
+        instructiondata = [signalstoint(['microcode_default'])] * conf['microcode_size']
 
         for instruction in instructions:
             try:
