@@ -1,13 +1,20 @@
-def nthbyte(data, n):
+from itertools import accumulate, chain
+
+
+def nbyte(data, n):
     mask = 0xff << ((n - 1) * 8)
     masked = mask & data
     return masked >> ((n - 1) * 8)
 
 
-firstbyte = lambda data: nthbyte(data, 1)
-secondbyte = lambda data: nthbyte(data, 2)
-thirdbyte = lambda data: nthbyte(data, 3)
-fourthbyte = lambda data: nthbyte(data, 4)
+# def firstbyte(i):
+#    return nbyte(i, 1)
+
+
+# firstbyte = lambda data: nthbyte(data, 1)
+# secondbyte = lambda data: nbyte(data, 2)
+# thirdbyte = lambda data: nbyte(data, 3)
+# fourthbyte = lambda data: nbyte(data, 4)
 
 uppernibble = lambda data: (data & 0xf0) >> 4
 lowernibble = lambda data: data & 0x0f
@@ -20,13 +27,8 @@ def bitbuilder(*args):
     if type(args) is not tuple:
         return lambda i: i & masknbits(args)
 
-    sizes = []
-    offsets = []
-    offset = 0
-    for i in args:
-        sizes.append(i)
-        offsets.append(offset)
-        offset += i
+    sizes = args
+    offsets = [x for x in chain([0], accumulate(args))]
 
     def resultfunc(*numbers):
         if len(numbers) != len(sizes):
@@ -36,15 +38,11 @@ def bitbuilder(*args):
             result |= ((masknbits(size) & number) << offset)
         return result
 
+    return resultfunc
+
 
 def masknbits(n):
-    if n == 0:
-        return 0
-    result = 1
-    for k in range(n - 1):
-        result <<= 1
-        result |= 1
-    return result
+    return (2 << n) - 1
 
 
 def maskrange(start, stop):
