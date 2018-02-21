@@ -23,3 +23,5 @@ env/
 *.g
 *.gb
 *.gm.py
+
+test.py

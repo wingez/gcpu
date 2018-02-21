@@ -11,7 +11,7 @@ _myexec = exec
 def exec(cmd, description='source string'):
     try:
         d=dict(locals(),**globals())
-        c = c   ompile(cmd, '<string>', 'exec')
+        c = compile(cmd, '<string>', 'exec')
         _myexec(c, d,d)
     except SyntaxError as err:
         error_class = err.__class__.__name__
