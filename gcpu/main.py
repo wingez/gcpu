@@ -1,6 +1,6 @@
 import click
 import gcpu._version
-from gcpu.microcode import core
+from gcpu.microcode import core, syntax
 from gcpu.compiler import compiler
 
 pass_verbose = click.make_pass_decorator(bool)
@@ -42,4 +42,10 @@ def microcode(verbose, configfile):
 @pass_verbose
 def check(verbose, syntaxes, configfile):
     core.loadconfig(configfile)
+    if syntaxes:
+        syntax.printall()
     print('done')
+
+
+if __name__ == '__main__':
+    cli()
