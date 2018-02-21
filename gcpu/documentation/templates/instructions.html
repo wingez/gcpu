@@ -1,33 +1,51 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<h2>Instruktioner</h2>
+<h2>Instructions</h2>
 
-{% for group in groups %}
+{% for groupname,group in instructiongroups.iteritems() %}
 
 <table>
     <caption>{{group.name}}</caption>
     <thead>
-        <tr>
-            <th>Name</th>
-            <th>Index</th>
-            <th>Syntax</th>
-            <th>Beskrivning</th>
-        </tr>
+    <tr>
+        <th>Name</th>
+        <th>Index</th>
+        {% if config.microcode_branching %}
+        <th>Flags</th>
+        {% endif %}
+        <th>Syntaxes</th>
+        <th>Description</th>
+    </tr>
     </thead>
     <tfoot>
-        <tr>
-            <td>Totalt: {{group.count}}</td>
-        </tr>
+    <tr>
+        <td>Count: {{lenght(group)}}</td>
+    </tr>
     </tfoot>
     <tbody>
-    {% for instr in group.instructions %}
-        <tr class="{{loop.cycle('odd','even')}}">
-            <td>{{instr.name}}</td>
-            <td>{{instr.index}}</td>
-            <td>{{instr.syntax}}</td>
-            <td>{{instr.desc}}</td>
-        </tr>
+    {% for instr in group %}
+    <tr class="{{loop.cycle('row-odd','row-even')}}">
+        <td>{{instr.name}}</td>
+        <td>{{instr.index}}</td>
+        {% if config.microcode_branching %}
+        <td>
+            <ul>
+                {% for flag in instr.flags %}
+                <li>{{flag}}</li>
+                {% endfor %}
+            </ul>
+        </td>
+        {% endif %}
+        <td>
+            <ul>
+                {% for syntax in instr.syntaxes %}
+                <li>{{syntax}}</li>
+                {% endfor %}
+            </ul>
+        </td>
+        <td>{{instr.desc}}</td>
+    </tr>
     {% endfor %}
     </tbody>
 </table>

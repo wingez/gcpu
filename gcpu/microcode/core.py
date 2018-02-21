@@ -5,7 +5,7 @@ from gcpu.microcode import syntax, flags
 from gcpu.compiler.pointer import Pointer
 
 from operator import attrgetter
-from itertools import product, count, chain
+from itertools import product, count, chain, filterfalse, starmap
 import os
 
 outputfileextensions = '.gb'
@@ -15,14 +15,9 @@ instructions = []
 
 log = lambda s: s
 
-# array representing memory content of the Microcode-ROMs
-# as of 1.5 for 15bits(8instr,5stage,2flags)=32k * 4byte
-# content represented by 32bit uint
-instructiondata = []
-
-conf = {
+cfg = {
     'use_microcode': False,
-    'microcode_default': 0,
+    'microcode_default': [],
     'microcode_branching': False,
     'microcode_pass_index': False,
     'microcode_encode': lambda kwargs: kwargs['instruction'],
@@ -36,9 +31,9 @@ conf = {
 
 def config(**kwargs):
     for c, v in kwargs.items():
-        if c not in conf:
+        if c not in cfg:
             raise ValueError('{} not valid setting'.format(c))
-        conf[c] = v
+        cfg[c] = v
 
 
 # the registers avialiable as parameters
@@ -74,6 +69,14 @@ class Instruction(object):
         syntax.create(mnemonic, args, self, priority)
         return self
 
+    def getsyntaxes(self):
+        return [s for s in syntax.syntaxes if s.instruction is self]
+
+    def getusedflags(self):
+        result = set()
+        starmap(result.union, (s.getusedflags() for s in self.stages))
+        return result
+
 
 flagslist = []
 
@@ -89,7 +92,7 @@ def CreateInstruction(name, mnemonic='', group='uncategorized', desc='', id=None
     i = Instruction(name)
     i.group, i.description, i.id, i.compilefunction = group, desc, id, compilefunc
 
-    if conf['use_microcode']:
+    if cfg['use_microcode']:
         if not stages:
             raise ValueError('No stages found')
         i.stages = parsestages(stages)
@@ -124,21 +127,20 @@ class Stage:
         return part.signals
 
     def getusedflags(self):
-        result = []
-        for part in self.parts:
-            for f in chain(part.flag.musthave, part.flag.mustnothave):
-                if f not in result:
-                    result.append(f)
-        return f
+        result = set()
+        map(result.add, (f for p in self.parts
+                         for f in chain(p.flags.musthave, p.flags.mustnothave)))
+
+        return result
 
 
 class StagePart:
-    def __init__(self, flags, signals):
-        self.flags, self.signals = flags, signals
-        self.priority = 0 if not flags else flags.priority
+    def __init__(self, flag, signals):
+        self.flag, self.signals = flag, signals
+        self.priority = 0 if not flag else flag.priority
 
     def matchesflags(self, flag):
-        return self.flags.compatible(flag)
+        return self.flag.compatible(flag)
 
 
 def parsestages(stages):
@@ -150,7 +152,7 @@ def parsestages(stages):
         if type(stageraw) is list:
             parts.append(StagePart(flags.empty, stageraw))
         elif type(stageraw) is dict:
-            if not conf['microcode_branching']:
+            if not cfg['microcode_branching']:
                 raise ValueError('Not configured to accept branching')
             for flag, signals in stageraw.items():
                 parts.append(StagePart(flag, signals))
@@ -180,20 +182,13 @@ def loadconfig(configfilename, verbose=True):
     # instructions and registers assume has valid data
     assignidtoinstructions()
 
-    if conf['use_microcode']:
-        global instructiondata
-        instructiondata = [signalstoint(['microcode_default'])] * conf['microcode_size']
+    if cfg['use_microcode']:
+        instructiondata = compileinstructionstages(instructions)
 
-        for instruction in instructions:
-            try:
-                compileinstructionstages(instruction)
-            except Exception as e:
-                print('error compiling instruction ', instruction.id, ' ', instruction.group)
-                raise e
     print('Compile successful!')
 
 
-def writeinstructiondatatofile(filename: str, outputdir: str):
+def writeinstructiondatatofile(filename: str, outputdir: str, instructiondata):
     filename = os.path.join(outputdir, filename) + outputfileextensions
     with open(filename, 'w') as f:
         for index, value in enumerate(instructiondata):
@@ -203,7 +198,7 @@ def writeinstructiondatatofile(filename: str, outputdir: str):
 
 
 def assignidtoinstructions():
-    maxsize = conf['instruction_ids']
+    maxsize = cfg['instruction_ids']
     usedids = [None] * maxsize
 
     if len(instructions) >= maxsize:
@@ -227,19 +222,20 @@ def assignidtoinstructions():
         assign(instr, id)
 
 
-def compileinstructionstages(instruction):
+def compileinstructionstages(instructions):
+    instructiondata = [signalstoint(cfg['microcode_default'])] * cfg['microcode_size']
     flagcombinations = product(*[(flag, -flag) for flag in flagslist])
 
-    addressfunc = conf['microcode_encode']
+    addressfunc = cfg['microcode_encode']
 
-    for stageindex, stage in enumerate(instruction.stages):
-        for flag in flagcombinations:
-            signals = stage.getsignalsfromflag(flag)
-
-            addr = addressfunc(instruction=instruction.id,
-                               stage=stageindex,
-                               flags=flags.flagstoint(flag))
-            instructiondata[addr] = signalstoint(signals)
+    for instr, index, stage, flag in ((i, ix, s, f) for i in instructions
+                                      for ix, s in enumerate(i.stages)
+                                      for f in flagcombinations):
+        signals = stage.getsignalsfromflag(flag)
+        addr = addressfunc(instruction=instr.id,
+                           stage=index,
+                           flags=flags.flagstoint(flag))
+        instructiondata[addr] = signalstoint(signals)
 
 
 def signalstoint(signals):

@@ -8,6 +8,7 @@ env = Environment(
     autoescape=select_autoescape(['html'])
 )
 
+gettemplate=env.get_template
 
 def getmarkdown(filename):
     path = os.path.join('gcpu', 'documentation', 'texts', filename)
