@@ -10,16 +10,16 @@ _myexec = exec
 
 def exec(cmd, description='source string'):
     try:
-        d=dict(locals(),**globals())
+        d = dict(locals(), **globals())
         c = compile(cmd, '<string>', 'exec')
-        _myexec(c, d,d)
+        _myexec(c, d, d)
     except SyntaxError as err:
         error_class = err.__class__.__name__
         detail = err.args[0]
         line_number = err.lineno
     except Exception as err:
         error_class = err.__class__.__name__
-        detail = err.args[0]
+        detail = err.args[0] if len(err.args) else ''
         cl, exc, tb = sys.exc_info()
         line_number = traceback.extract_tb(tb)[-1][1]
     else:
