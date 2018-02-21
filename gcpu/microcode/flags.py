@@ -4,15 +4,15 @@ class FlagBase:
         self.mustnothave = []
 
     def __add__(self, other):
-        if not issubclass(type(other), FlagBase):
+        if not isinstance(other,FlagBase):
             raise NotImplementedError()
-        r = FlagBase
+        r = FlagBase()
         r.musthave = self.musthave + other.musthave
         r.mustnothave = self.mustnothave + other.mustnothave
         return r
 
     def __neg__(self):
-        r = FlagBase
+        r = FlagBase()
         r.musthave = self.mustnothave
         r.mustnothave = self.musthave
         return r
