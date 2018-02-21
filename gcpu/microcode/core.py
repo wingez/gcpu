@@ -1,22 +1,47 @@
-from gcpu.betterexec import betterexec
-
+from gcpu import betterexec
 from gcpu.microcode.register import Register
 from gcpu.microcode.constant import Constant
-from gcpu.microcode import syntax
-import os
+from gcpu.microcode import syntax, flags
 from gcpu.compiler.pointer import Pointer
+
+from operator import attrgetter
+from itertools import product, count
+import os
+
 
 outputfileextensions = '.gb'
 
 # the instructionsset
 instructions = []
-# the registers avialiable as parameters
-registers = []
 
 # array representing memory content of the Microcode-ROMs
 # as of 1.5 for 15bits(8instr,5stage,2flags)=32k * 4byte
 # content represented by 32bit uint
-instructiondata = [0] * (2 ** 15)
+instructiondata = []
+
+conf = {
+    'use_microcode': False,
+    'microcode_default': 0,
+    'microcode_branching': False,
+    'microcode_pass_index': False,
+    'microcode_encode': lambda kwargs: kwargs['instruction'],
+    'microcode_size': 256,
+    'instruction_ids': 256,
+    'recursion': True,
+    'program_size': 256,
+    'memsegments': False,
+}
+
+
+def config(**kwargs):
+    for c, v in kwargs.items():
+        if c not in conf:
+            raise ValueError('{} not valid setting'.format(c))
+        conf[c] = v
+
+
+# the registers avialiable as parameters
+registers = []
 
 
 def CreateRegister(index, name, read, write, description=''):
@@ -26,7 +51,8 @@ def CreateRegister(index, name, read, write, description=''):
 
 
 class Instruction(object):
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.stages = None
         self.id = None
 
@@ -48,21 +74,33 @@ class Instruction(object):
         return self
 
 
-def CreateInstruction(mnemonic='', group='uncategorized', desc='', id=None,
-                      stages=[], args={}, compilefunc=None):
-    instr = Instruction()
+flagslist = []
+
+
+def CreateFlag(name, index):
+    f = flags.createflag(name, index)
+    flagslist.append(f)
+    return f
+
+
+def CreateInstruction(name, mnemonic='', group='uncategorized', desc='', id=None,
+                      stages=None, args=(), compilefunc=None):
+    if conf['use_microcode'] and not stages:
+        raise ValueError('No stages found')
+
+    instr = Instruction(name)
     instr.group = group
     instr.description = desc
-    instr.stages = stages
+    instr.stages = parsestages(stages)
     instr.id = id
     instr.compilefunction = compilefunc
 
     if compilefunc:
         instr.size += getinstructionsize(args, compilefunc)
 
-    if mnemonic:
-        priority = 1 if not all([arg.isgeneric for arg in args]) else 0
-        syntax.create(mnemonic, args, instr, priority)
+    mnemonic = mnemonic or name
+    priority = 1 if not all([arg.isgeneric for arg in args]) else 0
+    syntax.create(mnemonic, args, instr, priority)
 
     instructions.append(instr)
 
@@ -76,29 +114,73 @@ defaultparamvalues = {
     Constant: None}
 
 
+class Stage:
+    def __init__(self, parts):
+        self.parts = parts
+
+    def getsignalsfromflag(self, flag):
+        part = max((x for x in self.parts if x.matchesflags(flag)),
+                   key=attrgetter('priority'), default=None)
+        if not part:
+            raise ValueError('no stage found for flags {}'.format(flag))
+        return part.signals
+
+
+class StagePart:
+    def __init__(self, flags, signals):
+        self.flags, self.signals = flags, signals
+        self.priority = 0 if not flags else flags.priority
+
+    def matchesflags(self, flags):
+        return self.flags.compatible(flags)
+
+
+def parsestages(stages):
+    result = []
+
+    for stageraw in stages:
+        parts = []
+
+        if type(stageraw) is list:
+            parts.append(StagePart(flags.empty, stageraw))
+        elif type(stageraw) is dict:
+            if not conf['microcode_branching']:
+                raise ValueError('Not configured to accept branching')
+            for flag, signals in stageraw.items():
+                parts.append(StagePart(flag, signals))
+        else:
+            raise ValueError('')
+
+        result.append(Stage(parts))
+
+    return result
+
+
 def getinstructionsize(args, compilefunction):
     params = [defaultparamvalues[arg.arg] if arg.isgeneric else arg.arg for arg in args if arg.include]
     return len(compilefunction(*params))
 
 
-def loadconfig(configfilename):
+def loadconfig(configfilename, verbose=True):
     # Parse file
-    print('parsing file ' + configfilename)
-    betterexec(open(configfilename).read(), description=configfilename)
+    if verbose:
+        print('loading configfile: ' + configfilename)
+
+    betterexec.exec(open(configfilename).read(), description=configfilename)
 
     # instructions and registers assume has valid data
-
-    for i in range(0, len(instructiondata)):
-        instructiondata[i] = defaultinstructiondata
-
     assignidtoinstructions()
 
-    for instruction in instructions:
-        try:
-            compileinstructionstages(instruction)
-        except Exception as e:
-            print('error compiling instruction ', instruction.id, ' ', instruction.group)
-            raise e
+    if conf['use_microcode']:
+        global instructiondata
+        instructiondata = [conf['microcode_default']] * conf['microcode_size']
+
+        for instruction in instructions:
+            try:
+                compileinstructionstages(instruction)
+            except Exception as e:
+                print('error compiling instruction ', instruction.id, ' ', instruction.group)
+                raise e
     print('Compile successful!')
 
 
@@ -112,65 +194,43 @@ def writeinstructiondatatofile(filename: str, outputdir: str):
 
 
 def assignidtoinstructions():
-    usedids = [False] * (2 ** 8)
+    maxsize = conf['instruction_ids']
+    usedids = [None] * maxsize
+
+    if len(instructions) >= maxsize:
+        raise ValueError('to many instructions')
+
+    def assign(instruction, id):
+        if id >= maxsize:
+            raise ValueError('id over maxsize')
+        if usedids[id]:
+            raise ValueError('double assignment of id {}'.format(id))
+        instruction.id = id
+        usedids[id] = instruction
 
     for i in instructions:
-
-        # Note to self: Dont do (if i.id:) since 0 is a valid id
         if i.id is not None:
-            if usedids[i.id]:
-                raise ValueError('double assignment of id ' + str(i.id))
-            usedids[i.id] = True
+            assign(i, i.id)
 
-    toassignid = sorted([x for x in instructions if x.id is None], key=lambda instr: instr.group)
+    toassign = sorted([x for x in instructions if x.id is None], key=attrgetter('group'))
 
-    lowestfreeid = 0
-
-    for instr in toassignid:
-        while usedids[lowestfreeid]:
-            lowestfreeid += 1
-            if lowestfreeid >= 2 ** 8:
-                raise ValueError('Instructioncount exceded 256')
-
-        instr.id = lowestfreeid
-
-
-defaultinstructiondata = 0
-
-
-def setdefaultinstructiondata(signals):
-    global defaultinstructiondata
-    defaultinstructiondata = signalstoint(signals)
-
-
-def setinstructiondata(instruction, stageindex, flags, signals):
-    addr = encodeaddress(instruction.id, stageindex, flags)
-    instructiondata[addr] = signalstoint(signals)
+    for instr, id in zip(toassign, (x for x in count(0) if not usedids[x])):
+        assign(instr, id)
 
 
 def compileinstructionstages(instruction):
+    flagcombinations = product(*[(flag, -flag) for flag in flagslist])
+
+    addressfunc = conf['microcode_encode']
+
     for stageindex, stage in enumerate(instruction.stages):
-        hasflags = type(stage) is dict
-        for flags in range(0, 4):
-            stagesignals = getstagedatawithcorrectflags(stage, flags) if hasflags else stage
-            setinstructiondata(instruction, stageindex, flags, stagesignals)
+        for flag in flagcombinations:
+            signals = stage.getsignalsfromflag(flag)
 
-
-# none zero ovf zeronotovf ovfnotzero ovfzero
-flagspriority = [
-    ['none', 'fill'],
-    ['ovfnotzero', 'ovf', 'fill'],
-    ['zeronotovf', 'zero', 'fill'],
-    ['ovfzero', 'ovf', 'zero', 'fill']]
-
-
-def getstagedatawithcorrectflags(stage, flags):
-    for p in flagspriority[flags]:
-        for s in stage:
-            if s == p:
-                return stage[s]
-
-    raise ValueError("Stage contained no code for flags: " + str(flags))
+            addr = addressfunc(instruction=instruction.id,
+                               stage=stageindex,
+                               flags=flags.flagstoint(flag))
+            instructiondata[addr] = signalstoint(signals)
 
 
 def signalstoint(signals):
@@ -178,15 +238,3 @@ def signalstoint(signals):
     for signal in signals:
         result |= (1 << signal)
     return result
-
-
-def encodeaddress(instruction, stage, flags):
-    return instruction | (stage << 8) | (flags << 13)
-
-
-def decodeaddress(address):
-    instruction = 0x00ff & address
-    stage = (0x1f00 & address) >> 8
-    flags = (0x6000 & address) >> 13
-
-    return {'instruction': instruction, 'stage': stage, 'flags': flags}

@@ -1,10 +1,9 @@
-
 from .signal import Signal
 from .signalmultiplexer import SignalMultiplexer
-from .core import CreateInstruction,CreateRegister, setdefaultinstructiondata
+from .core import config, CreateFlag, CreateInstruction, CreateRegister, config
 from .constant import Constant, CreateConstant
 from .syntax import Argument
-from gcpu.bithelper import *
 
+from ..bithelper import *
 
 from gcpu.compiler.pointer import Pointer
