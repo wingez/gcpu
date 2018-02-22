@@ -3,6 +3,8 @@
 syntaxes = []
 syntaxesByMnemonic = {}
 
+from itertools import repeat, chain
+
 
 def create(mnemonic, args, instruction, priority=0):
     result = Syntax(mnemonic, instruction, args, priority)
@@ -51,10 +53,8 @@ class Syntax(object):
         return all([a == b for a, b in zip(args, self.args)])
 
     def __str__(self):
-        result = ['{}, {}'.format(self.instruction.id, self.mnemonic)]
-        result += [str(arg) for arg in self.args]
-        return ' '.join(result)
-
+        return ' '.join(chain(repeat(self.mnemonic, 1), map(str, self.args)))
+        
 
 class Argument:
 
