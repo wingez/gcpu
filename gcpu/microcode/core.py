@@ -65,7 +65,7 @@ class Instruction(object):
             result += self.compilefunction(*args)
         return result
 
-    def addsyntax(self, mnemonic, args, priority=0):
+    def addsyntax(self, mnemonic, args=(), priority=0):
         syntax.create(mnemonic, args, self, priority)
         return self
 

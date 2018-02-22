@@ -1,11 +1,50 @@
 <html>
 <head>
     {% block styles %}{% endblock %}
+
+    <style>
+        
+
+        body{
+            font-family:"Trebuchet MS";
+        }
+
+        table{
+            width:100%
+            border-collapse:collapse;
+        }
+        
+        .table-even{
+            background-color:#f2f2f2;
+        }
+        
+        th{
+            padding-top:12px;
+            padding-bottom:12px;
+            text-align:left;
+            background-color:#4CAF50;
+            color:white;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            margin:0px;
+        }
+        
+        table ul {
+            padding: 0;
+            list-style-type: none;
+        }
+    
+    
+    </style>
+
 </head>
 
 <body>
-    {% block body %}{% endblock %}
-    {% block scripts %}{% endblock %}
+{% block body %}{% endblock %}
+{% block scripts %}{% endblock %}
 </body>
 
 </html>
