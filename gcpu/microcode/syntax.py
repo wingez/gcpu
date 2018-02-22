@@ -4,6 +4,7 @@ syntaxes = []
 syntaxesByMnemonic = {}
 
 from itertools import repeat, chain
+from . import core
 
 
 def create(mnemonic, args, instruction, priority=0):
@@ -44,8 +45,8 @@ class Syntax(object):
 
     def compile(self, args):
         argstocompilewith = [arg for arg, s in zip(args, self.args) if s.include]
-        return self.instruction.compile(argstocompilewith)
-
+        return core.compileinstruction(self.instruction, argstocompilewith)
+    
     def matchesargs(self, args):
         if len(self.args) != len(args):
             return False
@@ -54,7 +55,7 @@ class Syntax(object):
 
     def __str__(self):
         return ' '.join(chain(repeat(self.mnemonic, 1), map(str, self.args)))
-        
+
 
 class Argument:
 

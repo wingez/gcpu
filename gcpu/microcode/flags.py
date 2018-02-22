@@ -1,10 +1,13 @@
+from itertools import chain
+
+
 class FlagBase:
     def __init__(self):
         self.musthave = []
         self.mustnothave = []
 
     def __add__(self, other):
-        if not isinstance(other,FlagBase):
+        if not isinstance(other, FlagBase):
             raise NotImplementedError()
         r = FlagBase()
         r.musthave = self.musthave + other.musthave
@@ -25,6 +28,17 @@ class FlagBase:
     def priority(self):
         return len(self.musthave) + len(self.mustnothave)
 
+    def __str__(self):
+        items = [x.name for x in self.musthave]
+        items += ['~{}'.format(x.name) for x in self.mustnothave]
+        return ' '.join(items)
+
+    def encode(self):
+        result = 0
+        for f in self.musthave:
+            result |= 1 << f.index
+        return result
+
 
 class Flag:
     def __init__(self, name, index):
@@ -32,7 +46,7 @@ class Flag:
         self.name, self.index = name, index
 
 
-empty = FlagBase()
+flag_empty = FlagBase()
 
 
 def createflag(name, index):
@@ -40,12 +54,4 @@ def createflag(name, index):
 
     result = FlagBase()
     result.musthave.append(f)
-    return result
-
-
-def flagstoint(flagiterable):
-    result = 0
-    for flag in flagiterable:
-        for f in flag.musthave:
-            result |= 1 << f.index
     return result

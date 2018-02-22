@@ -76,6 +76,12 @@ class Instruction(object):
         return set(chain.from_iterable((s.getusedflags() for s in self.stages)))
 
 
+def compileinstruction(instruction, args):
+    if cfg['microcode_pass_index']:
+        args.insert(0, instruction.id)
+    return instruction.compile(args)
+
+
 flagslist = []
 
 
@@ -145,7 +151,7 @@ def parsestages(stages):
         parts = []
 
         if type(stageraw) is list:
-            parts.append(StagePart(flags.empty, stageraw))
+            parts.append(StagePart(flags.flag_empty, stageraw))
         elif type(stageraw) is dict:
             if not cfg['microcode_branching']:
                 raise ValueError('Not configured to accept branching')
@@ -178,7 +184,7 @@ def loadconfig(configfilename, verbose=True):
     assignidtoinstructions()
 
     if cfg['use_microcode']:
-        instructiondata = compileinstructionstages(instructions)
+        instructiondata = compileinstructionstages()
 
     print('Compile successful!')
 
@@ -217,20 +223,23 @@ def assignidtoinstructions():
         assign(instr, id)
 
 
-def compileinstructionstages(instructions):
+def compileinstructionstages():
     instructiondata = [signalstoint(cfg['microcode_default'])] * cfg['microcode_size']
-    flagcombinations = product(*[(flag, -flag) for flag in flagslist])
+    flagcombinations = [a + b for a, b in product(*[(flag, -flag) for flag in flagslist])]
 
     addressfunc = cfg['microcode_encode']
 
-    for instr, index, stage, flag in ((i, ix, s, f) for i in instructions
-                                      for ix, s in enumerate(i.stages)
-                                      for f in flagcombinations):
+    for (instr, (index, stage)), flag in product(((i, s) for i in instructions
+                                                  for s in enumerate(i.stages)),
+                                                 flagcombinations):
         signals = stage.getsignalsfromflag(flag)
         addr = addressfunc(instruction=instr.id,
                            stage=index,
-                           flags=flags.flagstoint(flag))
-        instructiondata[addr] = signalstoint(signals)
+                           flags=flag.encode())
+        data = signalstoint(signals)
+        instructiondata[addr] = data
+        print(bin(addr), bin(data))
+    return instructiondata
 
 
 def signalstoint(signals):
