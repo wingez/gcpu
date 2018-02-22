@@ -3,7 +3,7 @@
 
 <h2>Instructions</h2>
 
-{% for groupname,group in instructiongroups.iteritems() %}
+{% for groupname,group in instructiongroups.items() %}
 
 <table>
     <caption>{{group.name}}</caption>
@@ -20,7 +20,7 @@
     </thead>
     <tfoot>
     <tr>
-        <td>Count: {{lenght(group)}}</td>
+        <td>Count: {{ group|length}}</td>
     </tr>
     </tfoot>
     <tbody>

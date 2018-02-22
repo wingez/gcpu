@@ -2,6 +2,7 @@ import click
 import gcpu._version
 from gcpu.microcode import core, syntax
 from gcpu.compiler import compiler
+from gcpu.documentation import generator
 
 pass_verbose = click.make_pass_decorator(bool)
 
@@ -32,7 +33,7 @@ def compile(verbose, suppress_warnings, configfile, file):
 @click.argument('configfile', type=click.Path(exists=True))
 @pass_verbose
 def microcode(verbose, configfile):
-    core.loadconfig(configfile)
+    loadconfig(configfile, verbose)
     print('done')
 
 
@@ -41,11 +42,24 @@ def microcode(verbose, configfile):
 @click.option('--syntaxes', '-s', is_flag=True, help='Print all availiable syntaxes')
 @pass_verbose
 def check(verbose, syntaxes, configfile):
-    core.loadconfig(configfile)
+    loadconfig(configfile, verbose)
     if syntaxes:
         syntax.printall()
     print('done')
 
+
+@cli.command()
+@click.option('--configfile', '-c', type=click.Path(exists=True))
+@pass_verbose
+def documentation(verbose, configfile):
+    if configfile:
+        loadconfig(configfile, verbose)
+        generator.instructions()
+
+
+def loadconfig(configfile, verbose):
+    core.loadconfig(configfile, verbose)
+    click.launch('output\\doc.html')
 
 if __name__ == '__main__':
     cli()
