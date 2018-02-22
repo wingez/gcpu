@@ -50,16 +50,20 @@ def check(verbose, syntaxes, configfile):
 
 @cli.command()
 @click.option('--configfile', '-c', type=click.Path(exists=True))
+@click.option('-d', is_flag=True, help='Opens the file when done')
 @pass_verbose
-def documentation(verbose, configfile):
+def documentation(verbose, configfile, d):
     if configfile:
         loadconfig(configfile, verbose)
         generator.instructions()
 
+        if d:
+            click.launch('output\\doc.html')
+
 
 def loadconfig(configfile, verbose):
     core.loadconfig(configfile, verbose)
-    click.launch('output\\doc.html')
+
 
 if __name__ == '__main__':
     cli()
