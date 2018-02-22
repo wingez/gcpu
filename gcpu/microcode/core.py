@@ -74,6 +74,9 @@ class Instruction(object):
         syntax.create(mnemonic, args, self, priority)
         return self
 
+    def __str__(self):
+        return self.name
+
     def getsyntaxes(self):
         return [s for s in syntax.syntaxes if s.instruction is self]
 
@@ -119,6 +122,7 @@ def CreateInstruction(name, mnemonic='', group='uncategorized', desc='', id=None
 
     return i
 
+
 def getinstructionsize(args, compilefunction):
     params = [defaultparamvalues[arg.arg] if arg.isgeneric else arg.arg for arg in args if arg.include]
     return len(compilefunction(*params))
@@ -137,10 +141,8 @@ class Stage:
 
     def getsignalsfromflag(self, flag):
         part = max((x for x in self.parts if x.matchesflags(flag)),
-                   key=attrgetter('priority'), default=False)
-        if not part:
-            raise ValueError('no stage found for flags {}'.format(flag))
-        return part.signals
+                   key=attrgetter('priority'), default=None)
+        return part.signals if part else None
 
     def getusedflags(self):
         return set((f for p in self.parts
@@ -175,8 +177,6 @@ def parsestages(stages):
         result.append(Stage(parts))
 
     return result
-
-
 
 
 def loadconfig(configfilename, verbose=True):
@@ -242,6 +242,10 @@ def compileinstructionstages():
                                                   for s in enumerate(i.stages)),
                                                  flagcombinations):
         signals = stage.getsignalsfromflag(flag)
+        if not signals:
+            raise ValueError('Instruction: {}, Stage: {}, No matching signals for flags:{}'.format(
+                instr, index, flag))
+
         addr = addressfunc(instruction=instr.id,
                            stage=index,
                            flags=flag.encode())
