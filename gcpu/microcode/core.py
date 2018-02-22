@@ -10,9 +10,6 @@ import os
 
 outputfileextensions = '.gb'
 
-# the instructionsset
-instructions = []
-
 log = lambda s: s
 
 cfg = {
@@ -44,6 +41,14 @@ def CreateRegister(index, name, read, write, description=''):
     result = Register(index, name, read, write, description)
     registers.append(result)
     return result
+
+
+signals = []
+
+
+def Signal(index, name='', description=''):
+    signals.append({'index': index, 'name': name, 'desciption': description})
+    return [index]
 
 
 class Instruction(object):
@@ -91,6 +96,9 @@ def CreateFlag(name, index):
     return f
 
 
+instructions = []
+
+
 def CreateInstruction(name, mnemonic='', group='uncategorized', desc='', id=None,
                       stages=None, args=(), compilefunc=None):
     i = Instruction(name)
@@ -110,6 +118,10 @@ def CreateInstruction(name, mnemonic='', group='uncategorized', desc='', id=None
     instructions.append(i)
 
     return i
+
+def getinstructionsize(args, compilefunction):
+    params = [defaultparamvalues[arg.arg] if arg.isgeneric else arg.arg for arg in args if arg.include]
+    return len(compilefunction(*params))
 
 
 defaultparamvalues = {
@@ -165,9 +177,6 @@ def parsestages(stages):
     return result
 
 
-def getinstructionsize(args, compilefunction):
-    params = [defaultparamvalues[arg.arg] if arg.isgeneric else arg.arg for arg in args if arg.include]
-    return len(compilefunction(*params))
 
 
 def loadconfig(configfilename, verbose=True):
