@@ -73,9 +73,7 @@ class Instruction(object):
         return [s for s in syntax.syntaxes if s.instruction is self]
 
     def getusedflags(self):
-        result = set()
-        starmap(result.union, (s.getusedflags() for s in self.stages))
-        return result
+        return set(chain.from_iterable((s.getusedflags() for s in self.stages)))
 
 
 flagslist = []
@@ -127,11 +125,8 @@ class Stage:
         return part.signals
 
     def getusedflags(self):
-        result = set()
-        map(result.add, (f for p in self.parts
-                         for f in chain(p.flags.musthave, p.flags.mustnothave)))
-
-        return result
+        return set((f for p in self.parts
+                    for f in chain(p.flag.musthave, p.flag.mustnothave)))
 
 
 class StagePart:
