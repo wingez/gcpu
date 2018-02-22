@@ -3,7 +3,7 @@
 
 <h2>Instructions</h2>
 
-{% for groupname,group in instructiongroups.items() %}
+{% for groupname,group in instructiongroups %}
 
 <table>
     <caption>{{groupname}}</caption>
@@ -40,11 +40,11 @@
         <td>
             <ul>
                 {% for syntax in instr.syntaxes %}
-                <li>{{syntax}}</li>
+                <li><code>{{syntax}}</code></li>
                 {% endfor %}
             </ul>
         </td>
-        <td>{{instr.desc}}</td>
+        <td>{{instr.description}}</td>
     </tr>
     {% endfor %}
     </tbody>
