@@ -6,15 +6,15 @@
 {% for groupname,group in instructiongroups %}
 
 <table>
-    <caption>{{groupname}}</caption>
+    <caption align="left">{{groupname}}</caption>
     <thead>
     <tr>
         <th>Name</th>
         <th>Index</th>
         {% if config.microcode_branching %}
-        <th>Flags</th>
+        <th>Branches</th>
         {% endif %}
-        <th>Syntaxes</th>
+        <th>Syntax(es)</th>
         <th>Description</th>
     </tr>
     </thead>
