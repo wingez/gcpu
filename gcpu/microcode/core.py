@@ -99,6 +99,10 @@ def CreateFlag(name, index):
     return f
 
 
+def getflags():
+    return [x.musthave[0] for x in flagslist]
+
+
 instructions = []
 
 
@@ -113,7 +117,10 @@ def CreateInstruction(name, mnemonic='', group='uncategorized', desc='', id=None
         i.stages = parsestages(stages)
 
     if compilefunc:
-        i.size = getinstructionsize(args, compilefunc)
+        size = getinstructionsize(args, compilefunc)
+        if not cfg['microcode_pass_index']:
+            size += 1
+        i.size = size
 
     priority = 1 if not all([arg.isgeneric for arg in args]) else 0
     syntax.create(mnemonic or name, args, i, priority)
