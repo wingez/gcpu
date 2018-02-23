@@ -24,18 +24,20 @@ tolowernibble = lambda data: data & 0x0f
 
 
 def bitbuilder(*args):
-    if type(args) is not tuple:
-        return lambda i: i & masknbits(args)
+    data = {}
+    offset = 0
+    for name, size in args:
+        data[name] = (size, offset)
+        offset += size
 
-    sizes = args
-    offsets = [x for x in chain([0], accumulate(args))]
+    def resultfunc(**kwargs):
 
-    def resultfunc(*numbers):
-        if len(numbers) != len(sizes):
-            raise ValueError('To few/many arguments')
         result = 0
-        for number, size, offset in zip(numbers, sizes, offsets):
-            result |= ((masknbits(size) & number) << offset)
+        for name, value in kwargs.items():
+            size = data[name][0]
+            offset = data[name][1]
+
+            result |= ((masknbits(size) & value) << offset)
         return result
 
     return resultfunc
