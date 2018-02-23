@@ -1,5 +1,5 @@
 from . import generator
-from gcpu.microcode import core
+from gcpu.microcode import core, syntax
 
 from operator import attrgetter, itemgetter
 from itertools import groupby
@@ -10,17 +10,7 @@ def generate() -> str:
 
     cfg = core.cfg
 
-    def process_instruction(instr):
-        return {
-            'name': instr.name,
-            'index': instr.id,
-            'group': instr.group,
-            'syntaxes': instr.getsyntaxes(),
-            'flags': map(attrgetter('name'), instr.getusedflags()),
-            'description': instr.description,
-        }
-
-    instructions = [process_instruction(i) for i in core.instructions]
+    instructions = [InstructionView(i) for i in core.instructions]
     registers = core.registers
     flags = core.flags
 
@@ -30,3 +20,10 @@ def generate() -> str:
         registers=registers,
         flags=core.getflags(),
     )
+
+
+class InstructionView:
+    def __init__(self, instr):
+        self.name, self.index, self.group, self.description = instr.name, instr.id, instr.group, instr.description
+        self.syntaxes = [s for s in syntax.syntaxes if s.instruction is instr]
+        self.flags = [f.name for f in instr.getusedflags()]

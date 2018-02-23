@@ -77,9 +77,6 @@ class Instruction(object):
     def __str__(self):
         return self.name
 
-    def getsyntaxes(self):
-        return [s for s in syntax.syntaxes if s.instruction is self]
-
     def getusedflags(self):
         return set(chain.from_iterable((s.getusedflags() for s in self.stages)))
 
