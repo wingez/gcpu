@@ -1,9 +1,57 @@
 {% extends "layout.html" %}
 {% block body %}
 
+{% if registers %}
+<h2>Registers</h2>
+
+<table>
+    <thead>
+    <tr>
+        <th>Register</th>
+        <th>Index</th>
+        <th>Readable</th>
+        <th>Writeable</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for register in registers %}
+    <tr class="{{loop.cycle('row-odd','row-even')}}">
+        <td>{{register.name}}</td>
+        <td>{{register.index}}</td>
+        <td>{% if register.read %} x {% endif %}</td>
+        <td>{% if register.write %} x {% endif %}</td>
+        <td>{{register.description}}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if config.microcode_branching and flags %}
+<h2>Flags</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Flag</th>
+        <th>Index</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for flag in flags|sort(attribute='index') %}
+    <tr class="{{loop.cycle('row-odd','row-even')}}">
+        <td>{{flag.name}}</td>
+        <td>{{flag.index}}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+
 <h2>Instructions</h2>
 
-{% for groupname,group in instructiongroups %}
+{% for groupname,group in instructions|groupby('group') %}
 
 <table>
     <caption align="left">{{groupname}}</caption>
@@ -17,14 +65,17 @@
         <th>Syntax(es)</th>
         <th>Description</th>
     </tr>
+    {#
     </thead>
+    
     <tfoot>
     <tr>
         <td>Count: {{ group|length}}</td>
     </tr>
     </tfoot>
+    #}
     <tbody>
-    {% for instr in group %}
+    {% for instr in group|sort(attribute='index') %}
     <tr class="{{loop.cycle('row-odd','row-even')}}">
         <td>{{instr.name}}</td>
         <td>{{instr.index}}</td>

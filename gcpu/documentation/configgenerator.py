@@ -10,20 +10,23 @@ def generate() -> str:
 
     cfg = core.cfg
 
-    def process_group(group):
-        def process_instr(instr):
-            return {
-                'name': instr.name,
-                'index': instr.id,
-                'syntaxes': instr.getsyntaxes(),
-                'flags': map(attrgetter('name'), instr.getusedflags()),
-                'description': instr.description,
-            }
+    def process_instruction(instr):
+        return {
+            'name': instr.name,
+            'index': instr.id,
+            'group': instr.group,
+            'syntaxes': instr.getsyntaxes(),
+            'flags': map(attrgetter('name'), instr.getusedflags()),
+            'description': instr.description,
+        }
 
-        return sorted([process_instr(i) for i in group], key=itemgetter('index'))
+    instructions = [process_instruction(i) for i in core.instructions]
+    registers = core.registers
+    flags = core.flags
 
-    instructions = core.instructions.copy()
-    instructions.sort(key=attrgetter('group'))
-    instrgroups = [(name, process_group(g)) for name, g in groupby(instructions, key=attrgetter('group'))]
-
-    return template.render(config=cfg, instructiongroups=instrgroups)
+    return template.render(
+        config=cfg,
+        instructions=instructions,
+        registers=registers,
+        flags=core.getflags(),
+    )
