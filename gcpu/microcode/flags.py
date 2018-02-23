@@ -1,21 +1,21 @@
 from itertools import chain
 
 
-class FlagBase:
+class FlagState:
     def __init__(self):
         self.musthave = []
         self.mustnothave = []
 
     def __add__(self, other):
-        if not isinstance(other, FlagBase):
+        if not isinstance(other, FlagState):
             raise NotImplementedError()
-        r = FlagBase()
+        r = FlagState()
         r.musthave = self.musthave + other.musthave
         r.mustnothave = self.mustnothave + other.mustnothave
         return r
 
     def __neg__(self):
-        r = FlagBase()
+        r = FlagState()
         r.musthave = self.mustnothave
         r.mustnothave = self.musthave
         return r
@@ -45,13 +45,10 @@ class Flag:
         super().__init__()
         self.name, self.index = name, index
 
+    def createstate(self):
+        result = FlagState()
+        result.musthave.append(self)
+        return result
 
-flag_empty = FlagBase()
 
-
-def createflag(name, index):
-    f = Flag(name, index)
-
-    result = FlagBase()
-    result.musthave.append(f)
-    return result
+flag_empty = FlagState()

@@ -91,13 +91,9 @@ flagslist = []
 
 
 def CreateFlag(name, index):
-    f = flags.createflag(name, index)
+    f = flags.Flag(name, index)
     flagslist.append(f)
-    return f
-
-
-def getflags():
-    return [x.musthave[0] for x in flagslist]
+    return f.createstate()
 
 
 instructions = []
@@ -238,7 +234,7 @@ def assignidtoinstructions():
 
 def compileinstructionstages():
     instructiondata = [signalstoint(cfg['microcode_default'])] * cfg['microcode_size']
-    flagcombinations = [a + b for a, b in product(*[(flag, -flag) for flag in flagslist])]
+    flagcombinations = [a + b for a, b in product(*[(flag.createstate(), -flag.createstate()) for flag in flagslist])]
 
     addressfunc = cfg['microcode_encode']
 

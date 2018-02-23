@@ -12,13 +12,13 @@ def generate() -> str:
 
     instructions = [InstructionView(i) for i in core.instructions]
     registers = core.registers
-    flags = core.flags
+    flags = core.flagslist
 
     return template.render(
         config=cfg,
         instructions=instructions,
         registers=registers,
-        flags=core.getflags(),
+        flags=flags,
     )
 
 
