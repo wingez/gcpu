@@ -19,7 +19,8 @@ class Instruction(object):
     def __init__(self, name, mnemonic='', group='uncategorized', desc='', index=None,
                  stages=None, args=(), compilefunc=None):
 
-        self.name, self.group, self.description, self.index, self.compilefunction = name, group, desc, index, compilefunc
+        self.name, self.group, self.description, self.index, self.compilefunction \
+            = name, group, desc, index, compilefunc
 
         if cfg['use_microcode']:
             if not stages:
@@ -78,8 +79,6 @@ class Instruction(object):
 
     @staticmethod
     def parsestages(stages):
-        result = []
-
         def process_stage(stage):
             parts = []
             if type(stage) is list:
