@@ -2,7 +2,7 @@ from .context import Context
 
 
 class DefContext(Context):
-    starttext = '#def'
+    starttext = '#def '
 
     def __init__(self, parent, statement: str):
         super().__init__(parent)
