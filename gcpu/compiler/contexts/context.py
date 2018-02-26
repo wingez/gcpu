@@ -13,7 +13,7 @@ class Context:
         self.active = True
         self.result = None
         self.parent = parent
-        self.variables = {}
+        self.scope = parent.scope.copy() if parent else {}
 
     def compile(self):
 
@@ -52,7 +52,7 @@ class Context:
         return self.result
 
     def exit(self):
-        result = self.onexiting()
+        result = self.onending()
         if type(result) is tuple:
             self.end(*result)
         else:
@@ -71,7 +71,7 @@ class Context:
     def oncontextend(self, context, result):
         return ()
 
-    def onexiting(self):
+    def onending(self):
         pass
 
     @classmethod

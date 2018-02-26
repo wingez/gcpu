@@ -139,7 +139,7 @@ class FileCompiler:
         self.name = name
         self.dependencies = []
 
-        self.locals = {}
+        self.scope = {}
 
         self.functions = {}
         self.memsegments = {}
@@ -198,16 +198,16 @@ class FileCompiler:
     def compile(self):
         throwhelper.file = self.name
 
-        self.locals = self.getidentifiers()
+        self.scope = self.getidentifiers()
         self.setstate(0)
 
         # recursevly compile the file
-        context = MainContext(self)
+        context = MainContext(self,self.scope)
         context.compile()
 
     def addobject(self, name, obj):
         self.defines[name] = obj
-        self.locals[name] = obj
+        self.scope[name] = obj
 
     def nextline(self) -> str:
 

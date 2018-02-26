@@ -16,7 +16,7 @@ class CodeContext(Context):
 
     def __init__(self, parent, name: str):
         super().__init__(parent)
-        self.variables = parent.variables.copy()
+        self.scope = parent.scope.copy()
 
         self.function = None
 
@@ -26,12 +26,12 @@ class CodeContext(Context):
         elif compiler.phase == 2:
             self.function = self.compiler.functions[name]
             if not self.function.isallocated:
-                self.onexiting()
+                self.onending()
 
         p = ptr(self.function)
-        self.variables[name] = p
+        self.scope[name] = p
         for name, i in self.function.indices.items():
-            self.variables[name] = p + i
+            self.scope[name] = p + i
 
         self.offset = 0
 
@@ -58,7 +58,7 @@ class CodeContext(Context):
     def oncontextend(self, context, result):
         if context is DefContext:
             id, result = result
-            self.variables[id] = result
+            self.scope[id] = result
 
     def readindices(self):
         indices = {}
@@ -71,7 +71,7 @@ class CodeContext(Context):
         self.compiler.setstate(state)
         return indices
 
-    def onexiting(self):
+    def onending(self):
         if compiler.phase == 1:
             self.compiler.functions[self.function.name] = self.function
         return self.function.name, ptr(self.function)
@@ -83,7 +83,7 @@ class CodeContext(Context):
         return mnemonic, args
 
     def evaluateargs(self, args):
-        result = [eval(arg, None, self.variables) for arg in args]
+        result = [eval(arg, None, self.scope) for arg in args]
         for arg in result:
             if type(arg) is Pointer:
                 self.function.dependencies.extend(arg.dependencies)

@@ -10,8 +10,8 @@ class MemContext(Context):
 
     def __init__(self, parent, statement):
         super().__init__(parent)
-        self.variables = parent.variables.copy()
-        self.variables.update({'msb': msb})
+        self.scope = parent.scope.copy()
+        self.scope.update({'msb': msb})
 
         name, result = self.docontext(DefContext, statement)
         if type(result) is not MemorySegment:

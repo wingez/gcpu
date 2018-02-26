@@ -10,10 +10,10 @@ class MainContext(Context):
     availablecontexts = [DefContext, MemContext, CodeContext, LogContext]
     acceptsEOF = True
 
-    def __init__(self, compiler):
+    def __init__(self, compiler, globals):
         super().__init__()
         self.compiler = compiler
-        self.variables = self.compiler.locals
+        self.scope = globals
 
     def oncontextend(self, context, result):
 

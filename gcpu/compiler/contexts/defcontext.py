@@ -9,6 +9,6 @@ class DefContext(Context):
 
         tmp = statement.partition('=')
         id = tmp[0].strip()
-        result = eval(tmp[2].strip(), None, parent.variables)
+        result = eval(tmp[2].strip(), None, parent.scope)
 
         self.end(id, result)
