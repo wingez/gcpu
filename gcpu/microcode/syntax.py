@@ -45,8 +45,8 @@ class Syntax(object):
 
     def compile(self, args):
         argstocompilewith = [arg for arg, s in zip(args, self.args) if s.include]
-        return core.compileinstruction(self.instruction, argstocompilewith)
-    
+        return self.instruction.compile(argstocompilewith)
+
     def matchesargs(self, args):
         if len(self.args) != len(args):
             return False
