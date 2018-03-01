@@ -25,12 +25,12 @@ class Context:
                 line = self.compiler.nextline()
             except EOFError:
                 if self.acceptsEOF:
-                    self.exit()
+                    self._exit()
                     break
                 throwhelper.throw('end of file reached', context=self.__name__)
 
             if self.endtext and line == self.endtext:
-                self.exit()
+                self._exit()
                 break
 
             for context in self.availablecontexts:
@@ -51,7 +51,7 @@ class Context:
             self.parent.oncontextend(self.__class__, self.result)
         return self.result
 
-    def exit(self):
+    def _exit(self):
         result = self.onending()
         if type(result) is tuple:
             self.end(*result)
@@ -59,20 +59,28 @@ class Context:
             self.end(result)
 
     def docontext(self, context, statement):
+        """Scope to a new context"""
         return context(self, statement).compile()
 
     def parseline(self, line):
+        """This method gets called for every line in the context. Return False if line could not be parsed"""
         return False
 
     def end(self, *result):
+        """Call this method when a context has finished parsing and control should return to its parent."""
         self.result = result
         self.active = False
 
-    def oncontextend(self, context, result):
+    def onending(self)->tuple:
+        """This method gets called when the end characters are reached.
+        Return a tuple containg the result of the context"""
         return ()
 
-    def onending(self):
-        pass
+    def oncontextend(self, context, result):
+        """This method gets called when a childcontext ends. By default adds result to scope"""
+        if type(result) is tuple and len(result) == 2:
+            if type(result[0]) is str:
+                self.scope[result[0]] = result[1]
 
     @classmethod
     def checkstart(cls, statement: str) -> bool:
