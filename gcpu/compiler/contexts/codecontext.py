@@ -4,7 +4,7 @@ from gcpu.microcode import syntax
 
 from gcpu.compiler.pointer import Pointer
 from .context import Context
-from .defcontext import DefContext
+from . import defcontext, structcontext, instancecontext
 
 
 class CodeContext(Context):
@@ -12,7 +12,7 @@ class CodeContext(Context):
     endtext = 'endf'
     indextext = '.'
 
-    availablecontexts = [DefContext]
+    availablecontexts = [defcontext.DefContext, structcontext.StructContext, instancecontext.InstanceContext]
 
     def __init__(self, parent, name: str):
         super().__init__(parent)
