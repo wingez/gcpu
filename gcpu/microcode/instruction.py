@@ -4,6 +4,7 @@ from ..compiler.pointer import Pointer
 from .constant import Constant
 from . import syntax
 from .flag import flag_empty
+from gcpu.compiler.memory import MemorySegment
 
 from itertools import chain, product
 from operator import attrgetter
@@ -13,7 +14,7 @@ class Instruction(object):
     defaultparamvalues = {
         Register: Register(0, '', [], []),
         int: 0,
-        Pointer: Pointer(0),
+        Pointer: Pointer(MemorySegment()),
         Constant: None}
 
     def __init__(self, name, mnemonic='', group='uncategorized', desc='', index=None,

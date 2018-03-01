@@ -1,7 +1,7 @@
 from .context import Context
 from .defcontext import DefContext
 from gcpu.compiler.memory import MemorySegment
-from gcpu.compiler.pointer import Pointer, ptr
+from gcpu.compiler.pointer import Pointer
 from gcpu.compiler import throwhelper, compiler
 
 
@@ -21,7 +21,7 @@ class MemContext(Context):
         elif compiler.phase == 2:
             self.compiler.components[MemorySegment, name].content = result.content
 
-        self.end(name, ptr(self.compiler.components[MemorySegment, name]))
+        self.end(name, Pointer(self.compiler.components[MemorySegment, name]))
 
 
 def msb(value):

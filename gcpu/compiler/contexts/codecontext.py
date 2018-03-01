@@ -2,7 +2,7 @@ from gcpu.compiler.memory import CodeFunction, MemorySegment
 from gcpu.compiler import compiler, throwhelper
 from gcpu.microcode import syntax
 
-from gcpu.compiler.pointer import Pointer, ptr
+from gcpu.compiler.pointer import Pointer
 from .context import Context
 from .defcontext import DefContext
 
@@ -29,7 +29,7 @@ class CodeContext(Context):
             if not self.function.isallocated:
                 self.onending()
 
-        p = ptr(self.function)
+        p = Pointer(self.function)
         self.scope[name] = p
         for name, i in self.function.indices.items():
             self.scope[name] = p + i
@@ -68,7 +68,7 @@ class CodeContext(Context):
         return indices
 
     def onending(self):
-        return self.function.name, ptr(self.function)
+        return self.function.name, Pointer(self.function)
 
     def parsestatement(self, statement: str):
         tmp = statement.split()
@@ -80,7 +80,7 @@ class CodeContext(Context):
         result = [eval(arg, None, self.scope) for arg in args]
         for arg in result:
             if type(arg) is Pointer:
-                self.function.dependencies.extend(arg.dependencies)
+                self.function.dependencies.append(arg.pointsto)
         return result
 
     def getsyntax(self, mnemonic: str, args: list) -> syntax.Syntax:

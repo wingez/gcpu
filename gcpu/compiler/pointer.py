@@ -2,13 +2,13 @@ from gcpu.compiler.memory import MemorySegment
 
 
 class Pointer:
-    def __init__(self, address: int = 0, dependecies=()):
-        self.address = address
-        self.dependencies = list(dependecies)
+    def __init__(self, pointsto: MemorySegment, offset=0):
+        self.pointsto = pointsto
+        self.offset = offset
 
     def __add__(self, other):
         if type(other) is int:
-            return Pointer(self.address + other, self.dependencies)
+            return Pointer(self.pointsto, self.offset + other)
 
         raise NotImplementedError
 
@@ -17,21 +17,16 @@ class Pointer:
 
     def __sub__(self, other):
         if type(other) is int:
-            return Pointer(self.address - other, self.dependencies)
+            return Pointer(self.pointsto, self.offset - other)
 
         raise NotImplementedError
+
+    @property
+    def address(self):
+        return self.pointsto.address + self.offset
 
     def __str__(self):
         return str(self.address)
 
     def __int__(self):
         return self.address
-
-
-def ptr(value):
-    if type(value) is int:
-        return Pointer(value)
-    elif issubclass(type(value),MemorySegment):
-        return Pointer(value.address, [value])
-    else:
-        raise ValueError('value is not int or memorysegment')
