@@ -67,7 +67,7 @@ class Argument:
 
     def __eq__(self, other):
         if self.isgeneric:
-            return type(other) is self.arg
+            return isinstance(other, self.arg)
         else:
             return other == self.arg
 

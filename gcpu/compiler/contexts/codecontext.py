@@ -55,7 +55,6 @@ class CodeContext(Context):
                 self.function.content.extend(s.compile(args))
             self.offset += s.size
 
-
     def readindices(self):
         indices = {}
         state = self.compiler.getstate()
@@ -79,7 +78,7 @@ class CodeContext(Context):
     def evaluateargs(self, args):
         result = [eval(arg, None, self.scope) for arg in args]
         for arg in result:
-            if type(arg) is Pointer:
+            if isinstance(arg, Pointer):
                 self.function.dependencies.append(arg.pointsto)
         return result
 

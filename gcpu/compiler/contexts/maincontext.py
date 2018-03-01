@@ -4,11 +4,14 @@ from .codecontext import CodeContext
 from .logcontext import LogContext
 from .memcontext import MemContext
 from .structcontext import StructContext
+from .instancecontext import InstanceContext
 from gcpu.compiler import compiler, throwhelper, pointer
 
 
 class MainContext(Context):
-    availablecontexts = [DefContext, MemContext, CodeContext, LogContext, StructContext]
+    availablecontexts = [DefContext, MemContext, CodeContext,
+                         LogContext, StructContext, InstanceContext,
+                         ]
     acceptsEOF = True
 
     def __init__(self, compiler, globals):
