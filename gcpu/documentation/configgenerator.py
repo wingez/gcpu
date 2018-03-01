@@ -24,6 +24,6 @@ def generate() -> str:
 
 class InstructionView:
     def __init__(self, instr):
-        self.name, self.index, self.group, self.description = instr.name, instr.id, instr.group, instr.description
+        self.name, self.index, self.group, self.description = instr.name, instr.index, instr.group, instr.description
         self.syntaxes = [s for s in syntax.syntaxes if s.instruction is instr]
         self.flags = [f.name for f in instr.getusedflags()]
