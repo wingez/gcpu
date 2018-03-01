@@ -1,5 +1,5 @@
 from . import context
-from .structcontext import Struct
+from .structcontext import Struct, StructContext
 from gcpu.compiler import compiler, memory, pointer
 
 
@@ -8,10 +8,31 @@ class InstanceContext(context.Context):
 
     def __init__(self, parent, statement):
         super().__init__(parent)
-        name, structname = statement.split()
-        structtype = self.scope.get(structname, None)
-        if not isinstance(structtype, Struct):
-            raise ValueError('no structtype')
+        arg = statement.split()
+
+        structtype = None
+        name = ''
+        structname = ''
+
+        if len(arg) == 2:
+            """
+                #instance <name> <structtype>
+            """
+
+            name, structname = arg
+
+            structtype = self.scope.get(structname, None)
+            if not isinstance(structtype, Struct):
+                raise ValueError('no structtype')
+        else:
+            """
+                #instance <name>
+                    structdef...
+                    ...
+                    ...
+                end
+            """
+            name, structtype = self.docontext(StructContext, arg[0])
 
         memsegment = None
         if compiler.phase == 1:
