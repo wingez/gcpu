@@ -35,10 +35,9 @@ class Context:
 
             for context in self.availablecontexts:
                 if context.checkstart(line):
-                    startstament = line.lstrip(context.starttext)
+                    startstament = line[len(context.starttext):]
                     c = context(self, startstament)
-                    result = c.compile()
-                    self.oncontextend(context, result)
+                    c.compile()
                     break
             else:
                 if self.parseline(line) is False:
