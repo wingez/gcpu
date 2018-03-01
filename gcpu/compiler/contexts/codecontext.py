@@ -9,7 +9,7 @@ from . import defcontext, structcontext, instancecontext
 
 class CodeContext(Context):
     starttext = '%'
-    endtext = 'endf'
+    endtext = 'end'
     indextext = '.'
 
     availablecontexts = [defcontext.DefContext, structcontext.StructContext, instancecontext.InstanceContext]

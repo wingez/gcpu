@@ -29,7 +29,7 @@ defaultstructs = {
 
 class StructContext(context.Context):
     starttext = '#struct '
-    endtext = 'endstruct'
+    endtext = 'end'
 
     availablecontexts = []
 
