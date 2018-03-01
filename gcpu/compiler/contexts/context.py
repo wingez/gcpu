@@ -68,10 +68,10 @@ class Context:
 
     def end(self, *result):
         """Call this method when a context has finished parsing and control should return to its parent."""
-        self.result = result
+        self.result = result[0] if len(result) == 1 else result
         self.active = False
 
-    def onending(self)->tuple:
+    def onending(self) -> tuple:
         """This method gets called when the end characters are reached.
         Return a tuple containg the result of the context"""
         return ()

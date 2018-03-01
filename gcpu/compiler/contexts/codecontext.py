@@ -16,15 +16,16 @@ class CodeContext(Context):
 
     def __init__(self, parent, name: str):
         super().__init__(parent)
-        self.scope = parent.scope.copy()
 
         self.function = None
 
         if compiler.phase == 1:
             self.function = CodeFunction(name)
             self.function.indices = self.readindices()
+
+            self.compiler.components[CodeFunction, name] = self.function
         elif compiler.phase == 2:
-            self.function = self.compiler.functions[name]
+            self.function = self.compiler.components[CodeFunction, name]
             if not self.function.isallocated:
                 self.onending()
 
@@ -34,7 +35,6 @@ class CodeContext(Context):
             self.scope[name] = p + i
 
         self.offset = 0
-
 
     def parseline(self, line: str):
         if line.startswith(self.indextext):
@@ -55,10 +55,6 @@ class CodeContext(Context):
                 self.function.content.extend(s.compile(args))
             self.offset += s.size
 
-    def oncontextend(self, context, result):
-        if context is DefContext:
-            id, result = result
-            self.scope[id] = result
 
     def readindices(self):
         indices = {}
@@ -72,8 +68,6 @@ class CodeContext(Context):
         return indices
 
     def onending(self):
-        if compiler.phase == 1:
-            self.compiler.functions[self.function.name] = self.function
         return self.function.name, ptr(self.function)
 
     def parsestatement(self, statement: str):

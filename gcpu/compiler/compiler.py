@@ -1,7 +1,7 @@
 from gcpu.compiler import throwhelper
 # from gcpu.compiler import maincontext
 from gcpu.compiler.contexts.maincontext import MainContext
-from gcpu.compiler.memory import MemoryAllocator, MemorySegment
+from gcpu.compiler.memory import MemoryAllocator, MemorySegment, CodeFunction
 import os
 
 dependencyimportsymbols = '#import '
@@ -24,6 +24,7 @@ filesCurrentlyIncluding = []
 compileOrder = []
 
 maxfilesize = 2 ** 15
+
 
 def compile(filename: str, outputdir: str):
     global phase
@@ -52,12 +53,12 @@ def compile(filename: str, outputdir: str):
 
     throwhelper.log('starting memory asignments')
     # calculate what memorysegments to include and asign address
-    if entryfunctionname not in basefile.functions:
+    entryfunction = basefile.components[CodeFunction].get(entryfunctionname, None)
+    if not entryfunction:
         raise throwhelper.CompileError(
             'no entrypoint found. Add a function named {} in file {}'.format(
                 entryfunctionname, basefile.name
             ))
-    entryfunction = basefile.functions[entryfunctionname]
     allocator = MemoryAllocator(maxfilesize)
     allocator.allocatealldependents(entryfunction)
     allocator.asignaddresses(entryfunction)
@@ -139,14 +140,11 @@ class FileCompiler:
         self.name = name
         self.dependencies = []
 
-        self.scope = {}
+        self.components = CompilerComponents()
 
-        self.functions = {}
-        self.memsegments = {}
-        self.defines = {}
+        self.toexport = {}
 
         self.linenumber = 0
-
         self.lines = [trimcomments(x) for x in readlines(self.name)]
         self.readdependencies()
 
@@ -168,25 +166,13 @@ class FileCompiler:
                 self.lines[linenumber] = ''
 
     def exportidentifiers(self):
-        result = {}
-
-        for name, value in self.defines.items():
-            result[self.name + '_' + name] = value
-
-        return result
+        return {'{}_{}'.format(self.name, key): value for key, value in self.toexport.items()}
 
     def getidentifiers(self):
         result = getglobals()
         for dependency in self.dependencies:
             result.update(dependency.exportidentifiers())
 
-        if phase == 1:
-            pass
-        elif phase == 2:
-            for name, func in self.functions.items():
-                result[name] = func.address
-            for name, mem in self.memsegments.items():
-                result[name] = mem.address
         return result
 
     def compilephase1(self):
@@ -197,17 +183,15 @@ class FileCompiler:
 
     def compile(self):
         throwhelper.file = self.name
+        globalsdefintions = self.getidentifiers()
 
-        self.scope = self.getidentifiers()
         self.setstate(0)
 
         # recursevly compile the file
-        context = MainContext(self,self.scope)
-        context.compile()
+        context = MainContext(self, globalsdefintions)
+        definitions = context.compile()
 
-    def addobject(self, name, obj):
-        self.defines[name] = obj
-        self.scope[name] = obj
+        self.toexport = {k: v for k, v in definitions.items() if not (k, v) in globalsdefintions.items()}
 
     def nextline(self) -> str:
 
@@ -228,3 +212,23 @@ class FileCompiler:
 
     def getstate(self):
         return self.linenumber
+
+
+class CompilerComponents:
+    def __init__(self):
+        self.dicts = {}
+
+    def __setitem__(self, key, value):
+        t = key[0]
+        k = key[1]
+
+        if t not in self.dicts:
+            self.dicts[t] = {k: value}
+        else:
+            self.dicts[t][k] = value
+
+    def __getitem__(self, item):
+        if type(item) is tuple:
+            return self.dicts[item[0]][item[1]]
+        else:
+            return self.dicts[item]

@@ -1,8 +1,8 @@
 from .context import Context
 from .defcontext import DefContext
 from gcpu.compiler.memory import MemorySegment
-from gcpu.compiler.pointer import Pointer
-from gcpu.compiler import throwhelper
+from gcpu.compiler.pointer import Pointer, ptr
+from gcpu.compiler import throwhelper, compiler
 
 
 class MemContext(Context):
@@ -10,14 +10,18 @@ class MemContext(Context):
 
     def __init__(self, parent, statement):
         super().__init__(parent)
-        self.scope = parent.scope.copy()
         self.scope.update({'msb': msb})
 
         name, result = self.docontext(DefContext, statement)
         if type(result) is not MemorySegment:
             throwhelper.throw('result is not memorysegment')
         result.id = name
-        self.end(name, result)
+        if compiler.phase == 1:
+            self.compiler.components[MemorySegment, name] = result
+        elif compiler.phase == 2:
+            self.compiler.components[MemorySegment, name].content = result.content
+
+        self.end(name, ptr(self.compiler.components[MemorySegment, name]))
 
 
 def msb(value):
