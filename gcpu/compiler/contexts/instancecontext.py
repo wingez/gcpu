@@ -10,10 +10,7 @@ class InstanceContext(context.Context):
         super().__init__(parent)
         arg = statement.split()
 
-        structtype = None
-        name = ''
-        structname = ''
-
+        structname = 'unnamed'
         if len(arg) == 2:
             """
                 #instance <name> <structtype>
@@ -42,16 +39,5 @@ class InstanceContext(context.Context):
         elif compiler.phase == 2:
             memsegment = self.compiler.components[memory.MemorySegment, name]
 
-        self.end(name, pointertreefromstruct(structtype, memsegment))
+        self.end(name, structtype.createpointer(memsegment))
 
-
-def pointertreefromstruct(struct, memsegment):
-    result = PointerTree(memsegment, struct.offset)
-    for k, v in struct.nodes.items():
-        setattr(result, k, pointertreefromstruct(v, memsegment))
-    return result
-
-
-class PointerTree(pointer.Pointer):
-    def __init__(self, baseobj, offset):
-        super().__init__(baseobj, offset)
