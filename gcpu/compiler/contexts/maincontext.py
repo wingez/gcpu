@@ -5,7 +5,7 @@ from .logcontext import LogContext
 from .memcontext import MemContext
 from .structcontext import StructContext
 from .instancecontext import InstanceContext
-from gcpu.compiler import compiler, throwhelper, pointer
+from . import scope
 
 
 class MainContext(Context):
@@ -13,11 +13,12 @@ class MainContext(Context):
                          LogContext, StructContext, InstanceContext,
                          ]
     acceptsEOF = True
+    scopemode = scope.new
 
     def __init__(self, compiler, globals):
         super().__init__()
         self.compiler = compiler
-        self.scope = globals.copy()
+        self.scope.update(globals)
 
     def onending(self):
         return self.scope

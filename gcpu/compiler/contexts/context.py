@@ -1,5 +1,6 @@
 import gcpu.compiler.throwhelper as throwhelper
 from typing import List, Dict
+from . import scope
 
 
 class Context:
@@ -7,13 +8,32 @@ class Context:
     endtext = None
     acceptsEOF = False
     availablecontexts = []
+    scopemode = 0
 
     def __init__(self, parent=None):
         self.compiler = parent.compiler if parent else None
         self.active = True
         self.result = None
         self.parent = parent
-        self.scope = parent.scope.copy() if parent else {}
+
+        self.setupscope()
+
+    def setupscope(self):
+        """
+        Setup the scope. If no custom scopemode attribute is asigned the scope default to extend if context has 
+        other context available as childrens or inherit if it does not.
+        :return:
+        """
+        scopemode = self.scopemode or (scope.extend if self.availablecontexts else scope.inherit)
+
+        if scopemode == scope.inherit:
+            self.scope = self.parent.scope
+        elif scopemode == scope.extend:
+            self.scope = self.parent.scope.copy()
+        elif scopemode == scope.new:
+            self.scope = scope.Scope()
+        else:
+            raise ValueError('Unknown scopemode: '.format(scopemode))
 
     def compile(self):
 

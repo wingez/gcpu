@@ -76,7 +76,7 @@ class CodeContext(Context):
         return mnemonic, args
 
     def evaluateargs(self, args):
-        result = [eval(arg, None, self.scope) for arg in args]
+        result = [self.scope.evalalutate(arg) for arg in args]
         for arg in result:
             if isinstance(arg, Pointer):
                 self.function.dependencies.append(arg.pointsto)

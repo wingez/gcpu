@@ -8,7 +8,7 @@ class LogContext(Context):
     def __init__(self, parent, statement: str):
         super().__init__(parent)
 
-        result = str(eval(statement, None, parent.scope))
+        result = str(self.scope.evalalutate(statement))
         throwhelper.log('log file:{} line:{}  {}'.format(self.compiler.name,
                                                          self.compiler.linenumber,
                                                          result))

@@ -82,7 +82,7 @@ class StructContext(context.Context):
         if line.endswith(']'):
             line, s = line.split('[')
             s = s.rstrip(']')
-            count = eval(s, None, self.scope)
+            count = self.scope.evalalutate(s)
         else:
             count = 1
 

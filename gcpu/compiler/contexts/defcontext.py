@@ -8,7 +8,7 @@ class DefContext(Context):
         super().__init__(parent)
 
         tmp = statement.partition('=')
-        id = tmp[0].strip()
-        result = eval(tmp[2].strip(), None, parent.scope)
+        key = tmp[0].strip()
+        result = self.scope.evalalutate(tmp[2].strip())
 
-        self.end(id, result)
+        self.end(key, result)
