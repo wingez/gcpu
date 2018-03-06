@@ -30,6 +30,8 @@ class Scope:
         return eval(statement, None, self._items)
 
 
+default = 0
 inherit = 1
 extend = 2
 new = 3
+none = 4

@@ -8,7 +8,7 @@ class Context:
     endtext = None
     acceptsEOF = False
     availablecontexts = []
-    scopemode = 0
+    scopemode = scope.default
 
     def __init__(self, parent=None):
         self.compiler = parent.compiler if parent else None
@@ -24,7 +24,10 @@ class Context:
         other context available as childrens or inherit if it does not.
         :return:
         """
-        scopemode = self.scopemode or (scope.extend if self.availablecontexts else scope.inherit)
+        if self.scopemode == scope.default:
+            scopemode = scope.extend if self.availablecontexts else scope.inherit
+        else:
+            scopemode = self.scopemode
 
         if scopemode == scope.inherit:
             self.scope = self.parent.scope
@@ -33,7 +36,8 @@ class Context:
         elif scopemode == scope.new:
             self.scope = scope.Scope()
         else:
-            raise ValueError('Unknown scopemode: '.format(scopemode))
+            # Do not add scope. Context should manage it itself
+            pass
 
     def compile(self):
 
