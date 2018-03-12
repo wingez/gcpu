@@ -1,68 +1,179 @@
 from . import context
-from gcpu.compiler.pointer import Pointer
+from gcpu.compiler import pointer, compiler, memory
+from collections import OrderedDict, namedtuple
 
 
-class Struct:
-    def __init__(self, name, size=0, offset=0, nodes=None):
-        self.name, self.size, self.offset, self.nodes = name, size, offset, nodes or {}
-
-    def appendstruct(self, name, struct, count=1):
-        if count != 1:
-            copy = StructArray(name, 0, self.size, struct, count)
-        else:
-            copy = struct.copyandoffset(self.size)
-        self.size += copy.size
-        self.nodes[name] = copy
-
-    def copyandoffset(self, offset):
-        return Struct(self.name, self.size, self.offset + offset,
-                      {key: s.copyandoffset(offset) for key, s in self.nodes.items()})
-
-    def createpointer(self, baseobject):
-        ptr = Pointer(baseobject, self.offset)
-        for name, struct in self.nodes.items():
-            setattr(ptr, name, struct.createpointer(baseobject))
-        return ptr
+def assertstructroot(struct):
+    if not isinstance(struct, StructRoot):
+        raise ValueError('basestruct must be of type {}'.format(StructRoot.__name__))
 
 
-class StructArray(Struct):
-
-    def __init__(self, name, size, offset, arraystruct, arraylength):
-        size = arraystruct.size * arraylength
-        super().__init__(name, size, offset)
-        self.arraystruct, self.arraylenght = arraystruct, arraylength
-
-        self.array = []
-        for i in range(arraylength):
-            self.array.append(arraystruct.copyandoffset(self.offset + arraystruct.size * i))
-
-    def copyandoffset(self, offset):
-        return StructArray(self.name, 0, self.offset + offset, self.arraystruct, self.arraylenght)
-
-    def createpointer(self, baseobject):
-        return ArrayPointer(baseobject, self.offset, [p.createpointer(baseobject) for p in self.array])
+class StructBase:
+    def __init__(self, offset):
+        self._size = 0
+        self._offset = offset
 
 
-class ArrayPointer(Pointer):
-    def __init__(self, memorysegment, offset, array):
-        super(ArrayPointer, self).__init__(memorysegment, offset)
-        self.array = array
-        self.length = len(array)
+class StructNode(StructBase):
+    def __init__(self, basestruct, offset):
+        super().__init__(offset)
+        assertstructroot(basestruct)
+
+        self._basestruct = basestruct
+
+    def __getattr__(self, item):
+        return self._basestruct.createnodeoffset(item, self._offset)
+
+
+class StructArray(StructBase):
+    def __init__(self, basestruct, length, offset):
+        super().__init__(offset)
+        assertstructroot(basestruct)
+
+        self._basestruct = basestruct
+        self._length = length
+        self._size = basestruct._size * length
 
     def __getitem__(self, item):
         if type(item) is not int:
-            raise ValueError('indexer is not int')
-        if item not in range(1, self.length):
-            raise ValueError('indexer not in range')
+            raise ValueError('Index must be int')
+        if item not in range(self._length):
+            raise ValueError('Index out of range')
+        offset = self._offset + self._length * self._basestruct._size
+        return StructNode(self._basestruct, offset)
 
-        return self.array[item]
+
+class StructRoot(StructNode):
+    NodeInfo = namedtuple('NodeInfo', ['struct', 'offset', 'count'])
+
+    def __init__(self, name):
+        super().__init__(self, 0)
+
+        self._name = name
+        self._nodes = OrderedDict()
+
+    def addnode(self, name: str, basestruct, count=1):
+
+        assertstructroot(basestruct)
+        if name in self._nodes:
+            raise ValueError('Node {} is already asigned'.format(name))
+        if name.startswith('_'):
+            raise ValueError('Name must not start with underscore _')
+        if count < 1:
+            raise ValueError('Arraylength cannot be less than 1')
+
+        self._nodes[name] = self.NodeInfo(basestruct, self._size, count)
+        self._size += basestruct._size * count
+
+    def createnodeoffset(self, name, offset):
+        nodeinfo = self._nodes.get(name, None)
+        if not nodeinfo:
+            raise ValueError('No substruct named {}'.format(name))
+
+        if nodeinfo.length == 1:
+            return StructNode(nodeinfo.basestruct, nodeinfo.offset + offset)
+        else:
+            return StructArray(nodeinfo.struct, nodeinfo.length, nodeinfo.offset + offset)
+
+    def createpointeroffset(self, name, memsegment, offset):
+        nodeinfo = self._nodes.get(name, None)
+        if not nodeinfo:
+            raise ValueError('No substruct named {}'.format(name))
+
+        if nodeinfo.length == 1:
+            return NodePointer(memsegment, offset + nodeinfo.offset, nodeinfo.struct)
+
+    def createpointer(self, memsegment):
+        return NodePointer(memsegment, 0, self)
+
+    def __str__(self):
+        return '{}, size = {}'.format(self._name, self._size)
+
+
+class PrimitiveStruct(StructRoot):
+    def __init__(self, name, size):
+        super().__init__(name)
+        self._size = size
+
+
+class NodePointer(pointer.Pointer):
+    def __init__(self, memsegment, offset, basestruct):
+        super().__init__(memsegment, offset)
+        assertstructroot(basestruct)
+
+        self.basestruct = basestruct
+
+    def __getattr__(self, item):
+        return self.basestruct.createpointeroffset(item, self.pointsto, self.offset)
+
+
+class ArrayPointer(pointer.Pointer):
+    def __init__(self, memsegment, offset, basestruct, count):
+        super().__init__(memsegment, offset)
+        assertstructroot(basestruct)
+
+        self.basestruct, self.count = basestruct, count
+
+    def __getitem__(self, item):
+        if type(item) is not int:
+            raise ValueError('Index must be int')
+        if item not in range(self.count):
+            raise ValueError('Index out of range')
+        offset = self.offset + self.count * self.basestruct._size
+        return NodePointer(self.pointsto, offset, self.basestruct)
 
 
 defaultstructs = {
-    'byte': Struct('', 1),
-    'dbyte': Struct(' ', 2),
-    'ptr': Struct('', 2),
+    'byte': PrimitiveStruct('byte', 1),
+    'dbyte': PrimitiveStruct('dbyte', 2),
+    'ptr': PrimitiveStruct('ptr', 2),
 }
+
+
+class StructParser:
+
+    def __init__(self, name, scope):
+        self.struct = StructRoot(name)
+        self.scope = scope
+
+    def parseline(self, line: str):
+        """
+            The following statements are valid, Parenthesis marks optional staments
+
+            <name> : <type>([<arraylength>])(=<initvalue>)
+        """
+        # line = "<name> : <type>([<arraylength>]) (=<initvalue>)"
+
+        initvalueraw = None
+        arraylength = 1
+
+        name, line = [l.strip() for l in line.split(':')]
+        # name = "<name>"
+        # line = "<type>([<arraylength>])(=<initvalue>)]"
+
+        if '=' in line:
+            line, initvalueraw = [l.strip() for l in line.split('=')]
+        # initvalueraw= "<initvalue>"
+        # line = "<type>([arraylength])"
+
+        if line.endswith(']'):
+            line, s = line.split('[')
+            s = s.rstrip(']')
+            arraylength = self.scope.evaluate(s)
+            # line= "<type>"
+
+        typeraw = line
+
+        structtype = self.scope[typeraw]
+        # initvalueraw = self.scope.evaluate(initvalueraw)
+
+        self.add(name, structtype, arraylength)
+
+    def add(self, name, structtype, arraylength=1):
+        self.struct.addnode(name, structtype, arraylength)
+
+    def finish(self):
+        return self.struct
 
 
 class StructContext(context.Context):
@@ -73,43 +184,60 @@ class StructContext(context.Context):
 
     def __init__(self, parent, name):
         super().__init__(parent)
-        self.scope.update(defaultstructs)
-        self.struct = Struct(name)
         self.name = name
+        self.scope.update(defaultstructs)
+        self.parser = StructParser(name, self.scope)
 
     def parseline(self, line: str):
-
-        if line.endswith(']'):
-            line, s = line.split('[')
-            s = s.rstrip(']')
-            count = self.scope.evalalutate(s)
-        else:
-            count = 1
-
-        tmp = line.split()
-        name = tmp[0]
-        typeraw = tmp[1]
-        structtype = self.scope.get(typeraw, None)
-        if not structtype:
-            raise ValueError('struct {} not found'.format(typeraw))
-        if not isinstance(structtype, Struct):
-            raise ValueError('not struct type'.format(typeraw))
-
-        self.addtostruct(name, structtype, count)
-
-    def addtostruct(self, name, structtype, count=1):
-        self.struct.appendstruct(name, structtype, count)
+        self.parser.parseline(line)
 
     def oncontextend(self, context, result):
         if context is StructContext:
-            name = result[0]
-            structtype = result[1]
-            self.addtostruct(name, structtype)
+            self.parser.add(*result)
         else:
             super().oncontextend(context, result)
 
     def onending(self):
-        return self.name, self.struct
+        return self.name, self.parser.finish()
 
 
 StructContext.availablecontexts.append(StructContext)
+
+
+class InstanceContext(context.Context):
+    starttext = '#instance '
+
+    def __init__(self, parent, statement: str):
+        super().__init__(parent)
+
+        arg = statement.split()
+
+        structname = 'unnamed'
+        if len(arg) == 2:
+            """
+                #instance <name> <structtype>
+            """
+
+            name, structname = arg
+
+            structtype = self.scope.get(structname, None)
+            assertstructroot(structtype)
+        else:
+            """
+                #instance <name>
+                    structdef...
+                    ...
+                    ...
+                end
+            """
+            name, structtype = self.docontext(StructContext, arg[0])
+
+        memsegment = None
+        if compiler.phase == 1:
+            memsegment = memory.MemorySegment('{}, struct = {}'.format(name, structname))
+            memsegment.size = structtype._size
+            self.compiler.components[memory.MemorySegment, name] = memsegment
+        elif compiler.phase == 2:
+            memsegment = self.compiler.components[memory.MemorySegment, name]
+
+        self.end(name, structtype.createpointer(memsegment))

@@ -3,8 +3,7 @@ from .defcontext import DefContext
 from .codecontext import CodeContext
 from .logcontext import LogContext
 from .memcontext import MemContext
-from .structcontext import StructContext
-from .instancecontext import InstanceContext
+from .structcontext import StructContext, InstanceContext
 from . import scope
 
 
