@@ -10,7 +10,7 @@ class Pointer:
         if type(other) is int:
             return Pointer(self.pointsto, self.offset + other)
 
-        raise NotImplementedError
+        return NotImplemented
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -19,7 +19,7 @@ class Pointer:
         if type(other) is int:
             return Pointer(self.pointsto, self.offset - other)
 
-        raise NotImplementedError
+        return NotImplemented
 
     @property
     def address(self):
