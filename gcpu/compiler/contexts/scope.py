@@ -26,7 +26,7 @@ class Scope:
         result._items = self._items.copy()
         return result
 
-    def evalalutate(self, statement):
+    def evaluate(self, statement):
         return eval(statement, None, self._items)
 
 

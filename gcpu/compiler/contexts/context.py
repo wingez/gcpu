@@ -2,7 +2,6 @@ import gcpu.compiler.throwhelper as throwhelper
 from typing import List, Dict
 from . import scope
 
-
 class Context:
     starttext = None
     endtext = None

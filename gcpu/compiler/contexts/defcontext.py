@@ -9,6 +9,7 @@ class DefContext(Context):
 
         tmp = statement.partition('=')
         key = tmp[0].strip()
-        result = self.scope.evalalutate(tmp[2].strip())
+        s = tmp[2].strip()
+        result = self.scope.evaluate(s)
 
         self.end(key, result)

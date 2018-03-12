@@ -4,7 +4,7 @@ from gcpu.microcode import syntax
 
 from gcpu.compiler.pointer import Pointer
 from .context import Context
-from . import defcontext, structcontext, instancecontext
+from . import defcontext, structcontext
 
 
 class CodeContext(Context):
@@ -12,7 +12,7 @@ class CodeContext(Context):
     endtext = 'end'
     indextext = '.'
 
-    availablecontexts = [defcontext.DefContext, structcontext.StructContext, instancecontext.InstanceContext]
+    availablecontexts = [defcontext.DefContext, structcontext.StructContext]
 
     def __init__(self, parent, name: str):
         super().__init__(parent)
@@ -76,7 +76,7 @@ class CodeContext(Context):
         return mnemonic, args
 
     def evaluateargs(self, args):
-        result = [self.scope.evalalutate(arg) for arg in args]
+        result = [self.scope.evaluate(arg) for arg in args]
         for arg in result:
             if isinstance(arg, Pointer):
                 self.function.dependencies.append(arg.pointsto)
