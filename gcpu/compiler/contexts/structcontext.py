@@ -80,8 +80,10 @@ class StructRoot(StructNode):
         if not nodeinfo:
             raise ValueError('No substruct named {}'.format(name))
 
-        if nodeinfo.length == 1:
+        if nodeinfo.count == 1:
             return NodePointer(memsegment, offset + nodeinfo.offset, nodeinfo.struct)
+        else:
+            return ArrayPointer(memsegment, offset + nodeinfo.offset, nodeinfo.struct, nodeinfo.count)
 
     def createpointer(self, memsegment):
         return NodePointer(memsegment, 0, self)
@@ -119,7 +121,7 @@ class ArrayPointer(pointer.Pointer):
             raise ValueError('Index must be int')
         if item not in range(self.count):
             raise ValueError('Index out of range')
-        offset = self.offset + self.count * self.basestruct._size
+        offset = self.offset + item * self.basestruct._size
         return NodePointer(self.pointsto, offset, self.basestruct)
 
 
@@ -209,19 +211,30 @@ class InstanceContext(context.Context):
 
     def __init__(self, parent, statement: str):
         super().__init__(parent)
+        self.scope.update(defaultstructs)
 
-        arg = statement.split()
+        memsegment = None
 
-        structname = 'unnamed'
-        if len(arg) == 2:
-            """
-                #instance <name> <structtype>
-            """
+        if ':' in statement:
+            # #instance <name>:<type> etc...
+            parser = StructParser('autostruct', self.scope)
+            parser.parseline(statement)
+            struct = parser.finish()
 
-            name, structname = arg
+            if not len(struct._nodes) == 1:
+                raise NotImplementedError
+            # Get first node which should be the name of the struct
+            name = next(iter(struct._nodes.keys()))
 
-            structtype = self.scope.get(structname, None)
-            assertstructroot(structtype)
+            if compiler.phase == 1:
+                memsegment = memory.MemorySegment('{}, struct = {}_{}'.format(name, struct._name, name))
+                memsegment.size = struct._size
+                self.compiler.components[memory.MemorySegment, name] = memsegment
+            elif compiler.phase == 2:
+                memsegment = self.compiler.components[memory.MemorySegment, name]
+
+            self.end(name, struct.createpointer(memsegment).__getattr__(name))
+
         else:
             """
                 #instance <name>
@@ -230,14 +243,13 @@ class InstanceContext(context.Context):
                     ...
                 end
             """
-            name, structtype = self.docontext(StructContext, arg[0])
+            name, struct = self.docontext(StructContext, statement)
 
-        memsegment = None
-        if compiler.phase == 1:
-            memsegment = memory.MemorySegment('{}, struct = {}'.format(name, structname))
-            memsegment.size = structtype._size
-            self.compiler.components[memory.MemorySegment, name] = memsegment
-        elif compiler.phase == 2:
-            memsegment = self.compiler.components[memory.MemorySegment, name]
+            if compiler.phase == 1:
+                memsegment = memory.MemorySegment('{}, struct = {}'.format(name, struct._name))
+                memsegment.size = struct._size
+                self.compiler.components[memory.MemorySegment, name] = memsegment
+            elif compiler.phase == 2:
+                memsegment = self.compiler.components[memory.MemorySegment, name]
 
-        self.end(name, structtype.createpointer(memsegment))
+            self.end(name, struct.createpointer(memsegment))
