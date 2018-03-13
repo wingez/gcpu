@@ -218,17 +218,22 @@ class CompilerComponents:
     def __init__(self):
         self.dicts = {}
 
-    def __setitem__(self, key, value):
-        t = key[0]
-        k = key[1]
+    def assertdictype(self, dicttype):
+        if dicttype not in self.dicts:
+            self.dicts[dicttype] = {}
 
-        if t not in self.dicts:
-            self.dicts[t] = {k: value}
-        else:
-            self.dicts[t][k] = value
+    def __setitem__(self, key, value):
+        t, k = key
+
+        self.assertdictype(t)
+        self.dicts[t][k] = value
 
     def __getitem__(self, item):
         if type(item) is tuple:
-            return self.dicts[item[0]][item[1]]
+            t, k = item
+            self.assertdictype(t)
+            return self.dicts[t][k]
         else:
-            return self.dicts[item]
+            t = item
+            self.assertdictype(t)
+            return self.dicts[t]
