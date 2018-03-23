@@ -51,12 +51,24 @@ class StructRoot(StructNode):
 
         self._name = name
         self._nodes = OrderedDict()
+        self._locked = False
+        self._defaultdata = None
+
+    def lock(self):
+        self._locked = True
+        self._defaultdata = [0] * self._size
 
     def addnode(self, name: str, basestruct, count=1):
 
         assertstructroot(basestruct)
+
+        if self._locked:
+            raise ValueError('Struct is locked')
+        if not basestruct._locked:
+            raise ValueError('Added basestruct must be locked')
+
         if name in self._nodes:
-            raise ValueError('Node {} is already asigned'.format(name))
+            raise ValueError('Node {} is already assigned'.format(name))
         if name.startswith('_'):
             raise ValueError('Name must not start with underscore _')
         if count < 1:
@@ -92,12 +104,6 @@ class StructRoot(StructNode):
         return '{}, size = {}'.format(self._name, self._size)
 
 
-class PrimitiveStruct(StructRoot):
-    def __init__(self, name, size):
-        super().__init__(name)
-        self._size = size
-
-
 class NodePointer(pointer.Pointer):
     def __init__(self, memsegment, offset, basestruct):
         super().__init__(memsegment, offset)
@@ -125,18 +131,44 @@ class ArrayPointer(pointer.Pointer):
         return NodePointer(self.pointsto, offset, self.basestruct)
 
 
+class Byte(StructRoot):
+    def __init__(self):
+        super().__init__('Byte')
+        self._size = 1
+        self.lock()
+
+
+class DByte(StructRoot):
+    def __init__(self):
+        super().__init__('DByte')
+        self._size = 2
+        self.lock()
+
+
+class Ptr(StructRoot):
+    def __init__(self):
+        super().__init__('Ptr')
+        self._size = 2
+        self.lock()
+
+
 defaultstructs = {
-    'byte': PrimitiveStruct('byte', 1),
-    'dbyte': PrimitiveStruct('dbyte', 2),
-    'ptr': PrimitiveStruct('ptr', 2),
+    'byte': Byte(),
+    'dbyte': DByte(),
+    'ptr': Ptr(),
 }
 
 
 class StructParser:
 
-    def __init__(self, name, scope):
-        self.struct = StructRoot(name)
-        self.scope = scope
+    def __init__(self, name, context):
+
+        self.context = context
+        if compiler.phase == 1:
+            self.struct = StructRoot(name)
+            self.context.compiler.components[StructRoot, name] = self.struct
+        elif compiler.phase == 2:
+            self.struct = self.context.compiler.components[StructRoot, name]
 
     def parseline(self, line: str):
         """
@@ -148,6 +180,7 @@ class StructParser:
 
         initvalueraw = None
         arraylength = 1
+        arraylengthraw = None
 
         name, line = [l.strip() for l in line.split(':')]
         # name = "<name>"
@@ -160,21 +193,27 @@ class StructParser:
 
         if line.endswith(']'):
             line, s = line.split('[')
-            s = s.rstrip(']')
-            arraylength = self.scope.evaluate(s)
+            arraylengthraw = s.rstrip(']')
             # line= "<type>"
 
         typeraw = line
 
-        structtype = self.scope[typeraw]
-        # initvalueraw = self.scope.evaluate(initvalueraw)
+        if compiler.phase == 1:
+            structtype = self.context.scope[typeraw]
 
-        self.add(name, structtype, arraylength)
+            if arraylengthraw:
+                arraylength = self.context.scope.evaluate(arraylengthraw)
+            self.add(name, structtype, arraylength)
+
+        elif compiler.phase == 2:
+            if initvalueraw:
+                initvalue = self.context.scope.evaluate(initvalueraw)
 
     def add(self, name, structtype, arraylength=1):
         self.struct.addnode(name, structtype, arraylength)
 
     def finish(self):
+        self.struct.lock()
         return self.struct
 
 
@@ -188,7 +227,7 @@ class StructContext(context.Context):
         super().__init__(parent)
         self.name = name
         self.scope.update(defaultstructs)
-        self.parser = StructParser(name, self.scope)
+        self.parser = StructParser(name, self)
 
     def parseline(self, line: str):
         self.parser.parseline(line)
@@ -217,7 +256,7 @@ class InstanceContext(context.Context):
 
         if ':' in statement:
             # #instance <name>:<type> etc...
-            parser = StructParser('autostruct', self.scope)
+            parser = StructParser('autostruct', self)
             parser.parseline(statement)
             struct = parser.finish()
 

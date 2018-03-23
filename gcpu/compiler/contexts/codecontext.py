@@ -12,7 +12,11 @@ class CodeContext(Context):
     endtext = 'end'
     indextext = '.'
 
-    availablecontexts = [defcontext.DefContext, structcontext.StructContext]
+    availablecontexts = [
+        defcontext.DefContext,
+        structcontext.StructContext,
+        structcontext.InstanceContext
+    ]
 
     def __init__(self, parent, name: str):
         super().__init__(parent)
