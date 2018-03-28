@@ -14,14 +14,15 @@
 
 # Virtual enviroment
 env/
+venv/
 
 #idk
 /.idea
 
 /output
 
-*.g
+
 *.gb
 *.gm.py
 
-test.py
+#test.py
