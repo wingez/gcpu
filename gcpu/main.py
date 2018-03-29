@@ -63,5 +63,8 @@ def loadconfig(configfile):
     core.loadconfig(configfile)
 
 
+if not os.path.exists('output/'):
+    os.makedirs('output/')
+
 if __name__ == '__main__':
     cli()
