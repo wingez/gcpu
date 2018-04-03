@@ -29,7 +29,7 @@ with open(dir + sys.argv[1], 'r')as f:
         address, value = map(int, line.split())
         data[address] = value
 
-mdataheader = """
+headertemplate = """
 #pragma once
 
 extern const char mdataversion[{{version|length}}];
@@ -38,14 +38,14 @@ extern const char mdatacompiletime[{{compiletime|length}}];
 unsigned long readmdata(unsigned int address);
 """
 
-mdatacpp = """
+cpptemplate = """
 #pragma once
 
 #include "mdata.h"
 #include "avr\pgmspace.h"
 
 const char mdataversion[{{version|length}}] = "{{version}}";
-extern const char mdatacompiletime[{{compiletime|length}}] = "compiletime";
+extern const char mdatacompiletime[{{compiletime|length}}] = "{{compiletime}}";
 
 {% for chunk in chunks %}
 
@@ -87,9 +87,9 @@ def chunks(l, n):
 
 
 with open(dir + 'mdata.h', 'w+') as w:
-    w.write(Template(mdataheader).render(version=version, compiletime=compiletime))
+    w.write(Template(headertemplate).render(version=version, compiletime=compiletime))
 
 with open(dir + 'mdata.cpp', 'w+') as w:
     w.write(
-        Template(mdatacpp).render(version=version, compiletime=compiletime, chunkbits=chunkbits, chunksize=chunksize,
-                                  chunks=[x for x in chunks(data, chunksize)]))
+        Template(cpptemplate).render(version=version, compiletime=compiletime, chunkbits=chunkbits, chunksize=chunksize,
+                                     chunks=[x for x in chunks(data, chunksize)]))
