@@ -26,7 +26,7 @@ compileOrder = []
 maxfilesize = 2 ** 15
 
 
-def compile(filename: str, outputdir: str):
+def compile(filename: str, outputfile: str):
     global phase
     filesIncluded.clear()
     filesCurrentlyIncluding.clear()
@@ -77,9 +77,18 @@ def compile(filename: str, outputdir: str):
     throwhelper.log('generating output file')
     filecontent = allocator.generatefilecontent()
     throwhelper.log('writing output')
-    outputfilename = os.path.join(outputdir, filename) + outputfileextension
-    writetofile(outputfilename, filecontent)
+    
+    writetofile(outputfile, filecontent)
 
+def findfile(filename):
+    # 1:search for relatives
+    # 2:search for absolute
+    # 3:search stdlib
+    pass
+    
+    
+    
+    
 
 def initializefile(filename):
     if filename in filesIncluded:
@@ -112,7 +121,7 @@ def readlines(file):
 
 
 def writetofile(filename, content):
-    with open(filename, 'w') as f:
+    with open(filename, 'w+') as f:
         for index, value in enumerate(content):
             line = '{} {}'.format(index, value)
             if True:
