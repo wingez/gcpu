@@ -15,7 +15,9 @@ def verboseoption(func):
     @wraps(func)
     def decorate(*args, **kwargs):
         printverbose.verbose = kwargs.pop('verbose')
-        return func(*args, **kwargs)
+        printverbose('command {}', func.__name__)
+        result = func(*args, **kwargs)
+        printverbose('end of command {}', func.__name__)
 
     return decorate
 
@@ -72,8 +74,8 @@ def openproject(name):
 
 @cli.command(name='compile', short_help='Compile a project.')
 @click.argument('program')
-@loadconfig
 @verboseoption
+@loadconfig
 def compile(program):
     """Compile a program"""
     if os.path.exists(program):
@@ -117,3 +119,4 @@ if not os.path.exists('output/'):
 
 if __name__ == '__main__':
     cli()
+printverbose('Done :)')

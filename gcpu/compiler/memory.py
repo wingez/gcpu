@@ -1,6 +1,7 @@
 from typing import List
 import gcpu.compiler.throwhelper as throwhelper
 from collections import OrderedDict
+from gcpu.utils import printverbose
 
 
 class MemorySegment:
@@ -27,7 +28,7 @@ class CodeFunction(MemorySegment):
 
 class MemoryAllocator:
 
-    def __init__(self, maxsize:int):
+    def __init__(self, maxsize: int):
         self.allocated = OrderedDict()
         self.currentaddress = 0
         self.maxsize = maxsize
@@ -63,7 +64,7 @@ class MemoryAllocator:
             name = segment.getasignmessage()
             if not name:
                 name = 'unknown'
-            throwhelper.log('asignning {}, size:{} at address {}'.format(name, segment.size, self.currentaddress))
+            printverbose('asignning {}, size:{} at address {}', name, segment.size, self.currentaddress)
 
             segment.address = self.currentaddress
             self.currentaddress += segment.size

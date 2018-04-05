@@ -5,6 +5,7 @@ from gcpu.compiler.memory import MemoryAllocator, MemorySegment, CodeFunction
 from gcpu.config import cfg
 import gcpu._version
 import os
+from gcpu.utils import printverbose
 
 dependencyimportsymbols = '#import '
 commentsymbols = '//'
@@ -37,26 +38,25 @@ def compile(filename: str, outputfile: str, directory: str):
     compileOrder.clear()
 
     totalmemory = cfg['program_size']
-    throwhelper.log('starting compilation of file {}\n'.format(filename))
+    printverbose('starting compilation of file {}', filename)
 
-    throwhelper.log('starting initialization and imports')
+    printverbose('\nstarting initialization and imports')
     phase = 0
     # load the file and recursively, all its dependencies
     # filesIncluded and compileOrder is now populated
     basefile = initializefile(filename)
-    throwhelper.log('ending initialization and imports\n')
+    printverbose('ending initialization and imports')
 
-    throwhelper.log('compileorder is: ' + ', '.join('{}: {}'.format(i + 1, x.name) for i, x in enumerate(compileOrder)))
-    throwhelper.log('')
+    printverbose('\ncompileorder is: {}', ', '.join('{}: {}'.format(*v) for v in enumerate(compileOrder, 1)))
 
     # perform compilation phase 1
-    throwhelper.log('starting compilation phase 1')
+    printverbose('\nstarting compilation phase 1')
     phase = 1
     for file in compileOrder:
         file.compilephase1()
-    throwhelper.log('ending compilation phase 1\n')
+    printverbose('ending compilation phase 1')
 
-    throwhelper.log('starting memory asignments')
+    printverbose('\nstarting memory asignments')
 
     # calculate what memorysegments to include and asign address
     entryfunction = basefile.components[CodeFunction].get(entryfunctionname, None)
@@ -69,26 +69,25 @@ def compile(filename: str, outputfile: str, directory: str):
     allocator.allocatealldependents(entryfunction)
     allocator.asignaddresses(entryfunction)
     usedmemory = allocator.getusedmemory()
-    throwhelper.log('total memory usage: {}'.format(usedmemory))
-    throwhelper.log('ending memory asignments\n')
+    printverbose('total memory usage: {}', usedmemory)
+    printverbose('ending memory asignments')
     Globals.mem_total = totalmemory
     Globals.mem_used = usedmemory
     Globals.mem_free = totalmemory - usedmemory
     Globals.mem_free_first = allocator.currentaddress
     Globals.mem_free_last = totalmemory - 1
 
-    throwhelper.log('starting compilation phase 2')
-    # perform phase2 compilation
+    printverbose('\nstarting compilation phase 2')
     phase = 2
     for file in compileOrder:
         file.compilephase2()
-    throwhelper.log('ending compilation phase 2\n')
+    printverbose('ending compilation phase 2')
 
-    throwhelper.log('compile successful!\n')
+    printverbose('\ncompile successful!')
 
-    throwhelper.log('generating output file')
+    printverbose('\ngenerating output file')
     filecontent = allocator.generatefilecontent()
-    throwhelper.log('writing output')
+    printverbose('writing output')
 
     writetofile(outputfile, filecontent)
 
@@ -128,7 +127,7 @@ def initializefile(name):
     if name in filesCurrentlyIncluding:
         throwhelper.throw('including: {} would cause a dependency loop'.format(name))
 
-    throwhelper.log('begins importing of {}'.format(name))
+    printverbose('begins importing of {}', name)
 
     filesCurrentlyIncluding.append(name)
 
@@ -138,7 +137,7 @@ def initializefile(name):
     filesIncluded[name] = c
     filesCurrentlyIncluding.remove(name)
 
-    throwhelper.log('end importing of {}'.format(name))
+    printverbose('end importing of {}', name)
 
     return c
 
@@ -155,6 +154,7 @@ def writetofile(filename, content):
     with open(filename, 'w+') as f:
         for index, value in enumerate(content):
             line = '{} {}'.format(index, value)
+            #TODO fix dis shit
             if True:
                 print(line)
             f.write(line)
@@ -268,6 +268,9 @@ class FileCompiler:
 
     def getstate(self):
         return self.linenumber
+
+    def __str__(self):
+        return self.name
 
 
 class CompilerComponents:

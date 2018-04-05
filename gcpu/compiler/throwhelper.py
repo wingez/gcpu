@@ -41,8 +41,3 @@ def generateerrormessage(desc, **location):
 
     return '| {}: {}'.format(loc, desc)
 
-
-def log(message):
-    # TODO
-    if logStream:
-        logStream.write(message + '\n')
