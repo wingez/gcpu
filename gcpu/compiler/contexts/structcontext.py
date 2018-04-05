@@ -256,7 +256,8 @@ class InstanceContext(context.Context):
 
         if ':' in statement:
             # #instance <name>:<type> etc...
-            parser = StructParser('autostruct', self)
+            structid='autotruct_{}_{}'.format(self.compiler.name,self.compiler.linenumber)
+            parser = StructParser(structid, self)
             parser.parseline(statement)
             struct = parser.finish()
 
@@ -266,7 +267,7 @@ class InstanceContext(context.Context):
             name = next(iter(struct._nodes.keys()))
 
             if compiler.phase == 1:
-                memsegment = memory.MemorySegment('{}, struct = {}_{}'.format(name, struct._name, name))
+                memsegment = memory.MemorySegment('{}, struct = {}'.format(name, struct._name))
                 memsegment.size = struct._size
                 self.compiler.components[memory.MemorySegment, name] = memsegment
             elif compiler.phase == 2:
