@@ -58,7 +58,7 @@ class Context:
 
             for context in self.availablecontexts:
                 if context.checkstart(line):
-                    startstament = line[len(context.starttext):]
+                    startstament = line[len(context.starttext):] if context.starttext else line
                     c = context(self, startstament)
                     c.compile()
                     break
