@@ -3,17 +3,38 @@ import gcpu._version
 from gcpu.microcode import core
 from gcpu.compiler import compiler
 from gcpu.documentation import generator
+from gcpu.utils import *
 
 import os
+from functools import wraps
 
-optionalconfigfile = click.option('--config', type=click.Path(), default='test.py', help='Optional configuration file')
+
+def verboseoption(func):
+    @click.option('--verbose', is_flag=True, default=False,
+                  help='Display verbose messages.')
+    @wraps(func)
+    def decorate(*args, **kwargs):
+        printverbose.verbose = kwargs.pop('verbose')
+        return func(*args, **kwargs)
+
+    return decorate
+
+
+def loadconfig(func):
+    @click.option('--config', type=click.Path(), default='test.py',
+                  help='Optional configuration file')
+    @wraps(func)
+    def decorate(*args, **kwargs):
+        core.loadconfig(kwargs.pop('config'))
+        return func(*args, **kwargs)
+
+    return decorate
 
 
 @click.group(invoke_without_command=True)
 @click.pass_context
 @click.version_option(gcpu._version.__version__)
-@click.option('--verbose', is_flag=True, help='Print verbose messages.')
-def cli(ctx, verbose):
+def cli(ctx):  # verbose):
     if ctx.invoked_subcommand is None:
         print('****This is the Awesome GCPU SDK program!****')
         print()
@@ -51,8 +72,9 @@ def openproject(name):
 
 @cli.command(name='compile', short_help='Compile a project.')
 @click.argument('program')
-@optionalconfigfile
-def compile(program, config):
+@loadconfig
+@verboseoption
+def compile(program):
     """Compile a program"""
     if os.path.exists(program):
         name = os.path.splitext(os.path.split(program)[1])[0]
@@ -68,33 +90,26 @@ def compile(program, config):
 
     outputdir = 'output/{}.txt'.format(name)
 
-    loadconfig(config)
     compiler.compile(program, outputdir, directory)
     print('done')
 
 
 @cli.command(name='microcode', short_help='Generate microcode.')
-@optionalconfigfile
-def microcode(configfile):
+@loadconfig
+def microcode():
     """Generates microcode to be used in GCPU-instruction-ROM from provided configfile."""
-    loadconfig(configfile)
     core.writeinstructiondatatofile('output/microcode.txt')
     print('done')
 
 
 @cli.command(name='doc', short_help='Render documentation.')
-@optionalconfigfile
 @click.option('--launch', is_flag=True, help='Open the generated file when ready.')
-def documentation(configfile, launch):
+@loadconfig
+def documentation(launch):
     """Renders docuemntation from provided configfile"""
-    loadconfig(configfile)
     generator.instructions()
     if launch:
         click.launch('output/doc.html')
-
-
-def loadconfig(configfile):
-    core.loadconfig(configfile)
 
 
 if not os.path.exists('output/'):
