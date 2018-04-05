@@ -1,15 +1,13 @@
 from gcpu import betterexec
 from gcpu.config import cfg
 from gcpu.microcode.register import Register
-from gcpu.microcode.constant import Constant
-from gcpu.microcode import syntax, flag
+from gcpu.microcode import flag
 from gcpu.microcode.instruction import Instruction
-from gcpu.compiler.pointer import Pointer
 
 from operator import attrgetter
-from itertools import product, count, chain, filterfalse, starmap
-import os
+from itertools import count
 import logging
+from gcpu.utils import printverbose
 
 log = logging.getLogger(__name__)
 
@@ -55,19 +53,19 @@ def CreateInstruction(name, **kwargs):
 
 def loadconfig(configfilename):
     # Parse file
-    log.info('loading configfile: {}'.format(configfilename))
+    printverbose('loading configfile: {}', configfilename)
 
     betterexec.exec(open(configfilename).read(), description=configfilename)
 
     # instructions and registers assume has valid data
     assignindextoinstructions()
 
-    print('Compile successful!')
+    printverbose('successful load of configfile')
 
 
-def writeinstructiondatatofile(filename: str, verbose=True):
-    with open(filename, 'w') as f:
-
+def writeinstructiondatatofile(filename: str):
+    printverbose('writing microcode to file {}', filename)
+    with open(filename, 'w+') as f:
         for instruction in instructions:
             f.write('#Instruction {}\n'.format(instruction.name))
             for addr, data in instruction.compilemicrocode(flags):
@@ -76,6 +74,9 @@ def writeinstructiondatatofile(filename: str, verbose=True):
 
 def assignindextoinstructions():
     maxsize = cfg['instruction_ids']
+    printverbose('assigning ids to instructions')
+    printverbose('found {} instructions, max is {}', len(instructions), maxsize)
+
     usedindices = [None] * maxsize
 
     if len(instructions) >= maxsize:
