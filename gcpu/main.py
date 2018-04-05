@@ -56,16 +56,20 @@ def compile(program, config):
     """Compile a program"""
     if os.path.exists(program):
         name = os.path.splitext(os.path.split(program)[1])[0]
+        directory = ''
     else:
         name = program
         program = 'projects/{0}/{0}.g'.format(program)
+        directory = 'projects/{}/'.format(name)
 
     if not os.path.exists(program):
-        print('File not found')
+        print('File {} not found'.format(name))
         return
 
+    outputdir = 'output/{}.txt'.format(name)
+
     loadconfig(config)
-    compiler.compile(program, 'output/{}.txt'.format(name))
+    compiler.compile(program, outputdir, directory)
     print('done')
 
 

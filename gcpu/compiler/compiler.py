@@ -25,9 +25,13 @@ compileOrder = []
 
 maxfilesize = 2 ** 15
 
+cwd = ''
 
-def compile(filename: str, outputfile: str):
-    global phase
+
+def compile(filename: str, outputfile: str, directory: str):
+    global phase, cwd
+    cwd = directory
+
     filesIncluded.clear()
     filesCurrentlyIncluding.clear()
     compileOrder.clear()
@@ -77,37 +81,56 @@ def compile(filename: str, outputfile: str):
     throwhelper.log('generating output file')
     filecontent = allocator.generatefilecontent()
     throwhelper.log('writing output')
-    
+
     writetofile(outputfile, filecontent)
 
+
 def findfile(filename):
-    # 1:search for relatives
-    # 2:search for absolute
-    # 3:search stdlib
-    pass
-    
-    
-    
-    
+    dir, ext = os.path.splitext(filename)
 
-def initializefile(filename):
-    if filename in filesIncluded:
-        return filesIncluded[filename]
+    filename = dir + (ext or codefileextension)
+    # 1:seach within local directory
+    file = cwd + filename
+    if os.path.exists(file):
+        return file
 
-    if filename in filesCurrentlyIncluding:
-        throwhelper.throw('including: {} would cause a dependency loop'.format(filename))
+    # 2:search within absolute directory
+    file = filename
+    if os.path.exists(file):
+        return file
 
-    throwhelper.log('begins importing of {}'.format(filename))
+    # 3:search within stdlib
+    file = 'stdlib/' + filename
+    if os.path.exists(file):
+        return file
 
-    filesCurrentlyIncluding.append(filename)
+    raise FileNotFoundError(filename)
 
-    c = FileCompiler(filename)
+
+def initializefile(name):
+    filename = findfile(name)
+
+    # strip eventual extension
+    name = os.path.splitext(name)[0]
+    name = name.replace('/', '_')
+
+    if name in filesIncluded:
+        return filesIncluded[name]
+
+    if name in filesCurrentlyIncluding:
+        throwhelper.throw('including: {} would cause a dependency loop'.format(name))
+
+    throwhelper.log('begins importing of {}'.format(name))
+
+    filesCurrentlyIncluding.append(name)
+
+    c = FileCompiler(name, filename)
 
     compileOrder.append(c)
-    filesIncluded[filename] = c
-    filesCurrentlyIncluding.remove(filename)
+    filesIncluded[name] = c
+    filesCurrentlyIncluding.remove(name)
 
-    throwhelper.log('end importing of {}'.format(filename))
+    throwhelper.log('end importing of {}'.format(name))
 
     return c
 
@@ -142,7 +165,7 @@ def getglobals():
 
 class FileCompiler:
 
-    def __init__(self, name):
+    def __init__(self, name, path):
         """
         Creates a new filecompiler,load the raw textfile and read  dependencies
         """
@@ -154,7 +177,7 @@ class FileCompiler:
         self.toexport = {}
 
         self.linenumber = 0
-        self.lines = [trimcomments(x) for x in readlines(self.name)]
+        self.lines = [trimcomments(x) for x in readlines(path)]
         self.readdependencies()
 
     def readdependencies(self):
