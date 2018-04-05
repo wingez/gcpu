@@ -2,6 +2,8 @@ from gcpu.compiler import throwhelper
 # from gcpu.compiler import maincontext
 from gcpu.compiler.contexts.maincontext import MainContext
 from gcpu.compiler.memory import MemoryAllocator, MemorySegment, CodeFunction
+from gcpu.config import cfg
+import gcpu._version
 import os
 
 dependencyimportsymbols = '#import '
@@ -23,8 +25,6 @@ filesIncluded = {}
 filesCurrentlyIncluding = []
 compileOrder = []
 
-maxfilesize = 2 ** 15
-
 cwd = ''
 
 
@@ -36,7 +36,8 @@ def compile(filename: str, outputfile: str, directory: str):
     filesCurrentlyIncluding.clear()
     compileOrder.clear()
 
-    throwhelper.log('starting compilation of file ' + filename + '\n')
+    totalmemory = cfg['program_size']
+    throwhelper.log('starting compilation of file {}\n'.format(filename))
 
     throwhelper.log('starting initialization and imports')
     phase = 0
@@ -56,6 +57,7 @@ def compile(filename: str, outputfile: str, directory: str):
     throwhelper.log('ending compilation phase 1\n')
 
     throwhelper.log('starting memory asignments')
+
     # calculate what memorysegments to include and asign address
     entryfunction = basefile.components[CodeFunction].get(entryfunctionname, None)
     if not entryfunction:
@@ -63,11 +65,17 @@ def compile(filename: str, outputfile: str, directory: str):
             'no entrypoint found. Add a function named {} in file {}'.format(
                 entryfunctionname, basefile.name
             ))
-    allocator = MemoryAllocator(maxfilesize)
+    allocator = MemoryAllocator(totalmemory)
     allocator.allocatealldependents(entryfunction)
     allocator.asignaddresses(entryfunction)
-    throwhelper.log('total memory usage: ' + str(allocator.getusedmemory()))
+    usedmemory = allocator.getusedmemory()
+    throwhelper.log('total memory usage: {}'.format(usedmemory))
     throwhelper.log('ending memory asignments\n')
+    Globals.mem_total = totalmemory
+    Globals.mem_used = usedmemory
+    Globals.mem_free = totalmemory - usedmemory
+    Globals.mem_free_first = allocator.currentaddress
+    Globals.mem_free_last = totalmemory - 1
 
     throwhelper.log('starting compilation phase 2')
     # perform phase2 compilation
@@ -159,8 +167,24 @@ def trimcomments(line):
     return line.strip()
 
 
+class Globals:
+    version = gcpu._version.__version__
+    # Total memory
+    mem_total = 0
+    # Total size of allocated memory
+    mem_used = 0
+    # Amount of memory avaliable for dynamic usage
+    mem_free = 0
+    # First address of unallocated memory region
+    mem_free_first = 0
+    # Last address of unallocated memory region
+    mem_free_last = 0
+    # Size of ram pages
+    pagesize = 2 ** 8
+
+
 def getglobals():
-    return {}
+    return {'globals': Globals}
 
 
 class FileCompiler:
