@@ -23,6 +23,7 @@ def verboseoption(func):
 
 
 def loadconfig(func):
+    @verboseoption
     @click.option('--config', type=click.Path(), default='test.py',
                   help='Optional configuration file')
     @wraps(func)
@@ -74,7 +75,6 @@ def openproject(name):
 
 @cli.command(name='compile', short_help='Compile a project.')
 @click.argument('program')
-@verboseoption
 @loadconfig
 def compile(program):
     """Compile a program"""
