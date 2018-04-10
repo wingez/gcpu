@@ -1,0 +1,57 @@
+{
+  /*"ram": {
+    "dataout": {
+      "pin": 17
+    },
+    "clock": {
+      "pin": 4
+    },
+    "latchout": {
+      "pin": 3
+    },
+    "datain": {
+      "pin": 2,
+      "mode": "input"
+    },
+    "mode": {
+      "pin": 24
+    },
+    "write": {
+      "pin": 22
+    },
+    "blwrite": {
+      "pin": 23
+    },
+    "datadirection": {
+      "pin": 27
+    },
+    "latchin": {
+      "pin": 25,
+      "inverted": true
+    }
+  },*/
+  "microcodein": {
+    "clock": {
+      "pin": 19
+    },
+    "latch": {
+      "pin": 13,
+      "inverted": true
+    },
+    "data": {
+      "pin": 26,
+      "mode": "input"
+    }
+  },
+  "microcodeout": {
+    "clock": {
+      "pin": 21
+    },
+    "latch": {
+      "pin": 20
+    },
+    "data": {
+      "pin": 16
+    }
+  }
+}
