@@ -22,6 +22,7 @@ setup(
     license='MIT',
     include_package_data=True,
     py_modules=['gcpu.main'],
+    python_requires='>=3.5',
     install_requires=[
         'Click',
         'Jinja2',
