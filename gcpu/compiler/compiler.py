@@ -1,11 +1,10 @@
-from gcpu.compiler import throwhelper
-# from gcpu.compiler import maincontext
+from gcpu.compiler import throwhelper, compilerglobals
 from gcpu.compiler.contexts.maincontext import MainContext
 from gcpu.compiler.memory import MemoryAllocator, MemorySegment, CodeFunction
 from gcpu.config import cfg
 import gcpu._version
 import os
-from gcpu.utils import printverbose
+from gcpu.utils import printverbose, static_variables
 
 dependencyimportsymbols = '#import '
 commentsymbols = '//'
@@ -36,6 +35,8 @@ def compile(filename: str, outputfile: str, directory: str):
     filesIncluded.clear()
     filesCurrentlyIncluding.clear()
     compileOrder.clear()
+
+    compilerglobals.dump()
 
     totalmemory = cfg['program_size']
     printverbose('starting compilation of file {}', filename)
@@ -154,7 +155,7 @@ def writetofile(filename, content):
     with open(filename, 'w+') as f:
         for index, value in enumerate(content):
             line = '{} {}'.format(index, value)
-            #TODO fix dis shit
+            # TODO fix dis shit
             if True:
                 print(line)
             f.write(line)
@@ -167,6 +168,10 @@ def trimcomments(line):
     return line.strip()
 
 
+
+
+
+@compilerglobals.globals('globals')
 class CompilerSettings:
     version = gcpu._version.__version__
     # Total memory
@@ -181,12 +186,6 @@ class CompilerSettings:
     mem_free_last = 0
     # Size of ram pages
     pagesize = 2 ** 8
-
-
-globaldict=dict()
-
-def getglobals():
-    return {'globals': CompilerSettings}
 
 
 class FileCompiler:
@@ -227,7 +226,7 @@ class FileCompiler:
         return {'{}_{}'.format(self.name, key): value for key, value in self.toexport.items()}
 
     def getidentifiers(self):
-        result = getglobals()
+        result = compilerglobals.getglobals()
         for dependency in self.dependencies:
             result.update(dependency.exportidentifiers())
 
