@@ -4,7 +4,7 @@ from gcpu.compiler.memory import MemoryAllocator, MemorySegment, CodeFunction
 from gcpu.config import cfg
 import gcpu._version
 import os
-from gcpu.utils import printverbose, static_variables
+from gcpu.utils import printverbose, classproperty
 
 dependencyimportsymbols = '#import '
 commentsymbols = '//'
@@ -26,6 +26,7 @@ filesCurrentlyIncluding = []
 compileOrder = []
 
 cwd = ''
+currentlycompiling = None
 
 
 def compile(filename: str, outputfile: str, directory: str):
@@ -168,9 +169,6 @@ def trimcomments(line):
     return line.strip()
 
 
-
-
-
 @compilerglobals.globals('globals')
 class CompilerSettings:
     version = gcpu._version.__version__
@@ -186,6 +184,14 @@ class CompilerSettings:
     mem_free_last = 0
     # Size of ram pages
     pagesize = 2 ** 8
+
+    @classproperty
+    def file(cls):
+        return currentlycompiling.name
+
+    @classproperty
+    def line(cls):
+        return currentlycompiling.getstate()
 
 
 class FileCompiler:
@@ -239,6 +245,8 @@ class FileCompiler:
         self.compile()
 
     def compile(self):
+        global currentlycompiling
+        currentlycompiling = self
         throwhelper.file = self.name
         globalsdefintions = self.getidentifiers()
 

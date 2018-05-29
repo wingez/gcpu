@@ -8,6 +8,11 @@ def static_variables(**kwargs):
 
 
 @static_variables(verbose=False)
-def printverbose(message: str='', *args, **kwargs):
+def printverbose(message: str = '', *args, **kwargs):
     if printverbose.verbose:
         print(str(message).format(*args, **kwargs))
+
+
+class classproperty(property):
+    def __get__(self, cls, owner):
+        return classmethod(self.fget).__get__(None, owner)()
