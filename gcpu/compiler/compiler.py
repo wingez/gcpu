@@ -71,11 +71,11 @@ def compile(filename: str, outputfile: str, directory: str):
     usedmemory = allocator.getusedmemory()
     printverbose('total memory usage: {}', usedmemory)
     printverbose('ending memory asignments')
-    Globals.mem_total = totalmemory
-    Globals.mem_used = usedmemory
-    Globals.mem_free = totalmemory - usedmemory
-    Globals.mem_free_first = allocator.currentaddress
-    Globals.mem_free_last = totalmemory - 1
+    CompilerSettings.mem_total = totalmemory
+    CompilerSettings.mem_used = usedmemory
+    CompilerSettings.mem_free = totalmemory - usedmemory
+    CompilerSettings.mem_free_first = allocator.currentaddress
+    CompilerSettings.mem_free_last = totalmemory - 1
 
     printverbose('\nstarting compilation phase 2')
     phase = 2
@@ -167,7 +167,7 @@ def trimcomments(line):
     return line.strip()
 
 
-class Globals:
+class CompilerSettings:
     version = gcpu._version.__version__
     # Total memory
     mem_total = 0
@@ -183,8 +183,10 @@ class Globals:
     pagesize = 2 ** 8
 
 
+globaldict=dict()
+
 def getglobals():
-    return {'globals': Globals}
+    return {'globals': CompilerSettings}
 
 
 class FileCompiler:
