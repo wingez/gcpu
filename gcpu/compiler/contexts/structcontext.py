@@ -1,11 +1,21 @@
 from . import context
-from gcpu.compiler import pointer, compiler, memory
+from gcpu.compiler import pointer, compiler, memory, compilerglobals
 from collections import OrderedDict, namedtuple
 
 
 def assertstructroot(struct):
     if not isinstance(struct, StructRoot):
         raise ValueError('basestruct must be of type {}'.format(StructRoot.__name__))
+
+
+@compilerglobals.globals('size')
+def sizeof(obj):
+    if isinstance(obj, StructBase):
+        return obj._size
+    if isinstance(obj, pointer.Pointer):
+        return obj.pointsto.size
+
+    raise ValueError('This function is defined for structs and instances, not {}.'.format(type(obj).__name__))
 
 
 class StructBase:
@@ -256,7 +266,7 @@ class InstanceContext(context.Context):
 
         if ':' in statement:
             # #instance <name>:<type> etc...
-            structid='autotruct_{}_{}'.format(self.compiler.name,self.compiler.linenumber)
+            structid = 'autotruct_{}_{}'.format(self.compiler.name, self.compiler.linenumber)
             parser = StructParser(structid, self)
             parser.parseline(statement)
             struct = parser.finish()
