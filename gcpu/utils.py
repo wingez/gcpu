@@ -8,6 +8,6 @@ def static_variables(**kwargs):
 
 
 @static_variables(verbose=False)
-def printverbose(message: str, *args, **kwargs):
+def printverbose(message: str='', *args, **kwargs):
     if printverbose.verbose:
         print(str(message).format(*args, **kwargs))
